@@ -1,0 +1,8 @@
+set(DILIGENT_CORE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/DiligentCore)
+add_subdirectory(${DILIGENT_CORE_DIR})
+
+set(DILIGENT_CORE_PRO_DIR ${CMAKE_CURRENT_SOURCE_DIR}/DiligentCorePro)
+add_subdirectory(${DILIGENT_CORE_PRO_DIR})
+
+set(DILIGENT_TOOLS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/DiligentTools)
+add_subdirectory(${DILIGENT_TOOLS_DIR})
