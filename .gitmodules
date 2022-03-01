@@ -1,9 +1,12 @@
 [submodule "submodules/DiligentCore"]
 	path = submodules/DiligentCore
 	url = https://github.com/DiligentGraphics/DiligentCore.git
-[submodule "submodules/DiligentTools"]
-	path = submodules/DiligentTools
-	url = https://github.com/DiligentGraphics/DiligentTools.git
 [submodule "submodules/DiligentCorePro"]
 	path = submodules/DiligentCorePro
 	url = https://github.com/znly/DiligentCorePro
+[submodule "submodules/DiligentFX"]
+	path = submodules/DiligentFX
+	url = https://github.com/DiligentGraphics/DiligentFX
+[submodule "submodules/DiligentTools"]
+	path = submodules/DiligentTools
+	url = https://github.com/SebMenozzi/DiligentTools

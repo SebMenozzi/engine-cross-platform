@@ -6,3 +6,6 @@ add_subdirectory(${DILIGENT_CORE_PRO_DIR})
 
 set(DILIGENT_TOOLS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/DiligentTools)
 add_subdirectory(${DILIGENT_TOOLS_DIR})
+
+set(DILIGENT_FX_DIR ${CMAKE_CURRENT_SOURCE_DIR}/DiligentFX)
+add_subdirectory(${DILIGENT_FX_DIR})
