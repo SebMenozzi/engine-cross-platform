@@ -193,9 +193,48 @@ namespace Diligent
 
     void AtmosphereSample::UpdateUI()
     {
+        ImGuiIO& io = ImGui::GetIO();
+        io.BackendFlags |= ImGuiConfigFlags_DockingEnable;
+        io.BackendFlags |= ImGuiConfigFlags_ViewportsEnable;
+
+        static ImGuiDockNodeFlags flags = ImGuiDockNodeFlags_NoWindowMenuButton | ImGuiDockNodeFlags_NoCloseButton;
+
+        ImGuiID dockspaceID = ImGui::GetID("MyDockspace");
+
+        static bool initialized = false;
+
+        if (!initialized)
+        {
+            ImGui::DockBuilderRemoveNode(dockspaceID); // Clear out existing layout
+            ImGui::DockBuilderAddNode(dockspaceID); // Add empty node
+            //ImGui::DockBuilderSetNodeSize(dockspaceID, );
+
+            ImGuiID dockLeft = ImGui::DockBuilderSplitNode(dockspaceID, ImGuiDir_Left, 0.2f, nullptr, &dockspaceID);
+
+            ImGuiID dockMiddle = ImGui::DockBuilderSplitNode(dockspaceID, ImGuiDir_Right, 0.8f, nullptr, &dockspaceID);
+
+            ImGuiID dockBottom = ImGui::DockBuilderSplitNode(dockspaceID, ImGuiDir_Down, 0.3f, nullptr, &dockspaceID);
+
+            ImGui::DockBuilderDockWindow("Settings", dockLeft);
+            ImGui::DockBuilderDockWindow("Engine", dockMiddle);
+            ImGui::DockBuilderDockWindow("Console", dockBottom);
+
+            ImGui::DockBuilderFinish(dockspaceID);
+            initialized = true;
+        }
+
+        // Dockspace
+        ImGui::DockSpace(dockspaceID, ImVec2(0.0f, 0.0f), flags);
+
         ImGui::SetNextWindowPos(ImVec2(10, 10), ImGuiCond_FirstUseEver);
 
-        if (ImGui::Begin("Settings", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+        auto flagsWindow = ImGuiWindowFlags_NoNavFocus |
+        ImGuiWindowFlags_NoResize |
+        ImGuiWindowFlags_NoCollapse |
+        ImGuiWindowFlags_NoBringToFrontOnFocus |
+        ImGuiWindowFlags_NoMove | ImGuiWindowFlags_HorizontalScrollbar;
+
+        if (ImGui::Begin("Settings", nullptr, flagsWindow))
         {
             ImGui::gizmo3D(
                 "Light direction",
@@ -209,7 +248,7 @@ namespace Diligent
                 100000
             );
 
-            ImGui::SetNextTreeNodeOpen(true, ImGuiCond_FirstUseEver);
+            ImGui::SetNextItemOpen(true, ImGuiCond_FirstUseEver);
 
             if (ImGui::TreeNode("Shadows"))
             {
@@ -518,6 +557,9 @@ namespace Diligent
                 }
             }
         }
+        ImGui::End();
+
+        ImGui::Begin("Console", nullptr, flagsWindow);
         ImGui::End();
     }
 

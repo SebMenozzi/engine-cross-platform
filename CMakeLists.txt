@@ -12,7 +12,8 @@ set(CMAKE_XCODE_SCHEME_MALLOC_GUARD_EDGES YES)
 project(engine)
 
 add_subdirectory(submodules)
-add_subdirectory(SampleBase)
+add_subdirectory(NativeApp)
+add_subdirectory(SampleAppBase)
 
 # --------------
 
@@ -95,9 +96,8 @@ target_include_directories(engine PRIVATE src)
 target_link_libraries(engine PRIVATE
     # On Linux we must have Diligent-NativeAppBase go first, otherwise the linker 
     # will fail to resolve Diligent::CreateApplication() function.
-    Diligent-NativeAppBase
+    Engine-SampleAppBase
     Diligent-BuildSettings
-    Diligent-SampleBase
 )
 set_common_target_properties(engine)
 
