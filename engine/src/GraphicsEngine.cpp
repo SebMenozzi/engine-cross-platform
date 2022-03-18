@@ -11,52 +11,65 @@ namespace Diligent
 {
     // MARK: - Public
 
-    void GraphicsEngine::initialize_diligent_engine(const NativeWindow* window)
+    GraphicsEngine::GraphicsEngine():
+        last_time_(timer_.GetElapsedTime())
+    {}
+
+    void GraphicsEngine::initialize(const NativeWindow* window)
     {
         // Initialize the swap chain descriptor
         #if PLATFORM_MACOS
-        // We need at least 3 buffers in Metal to avoid massive
-        // performance degradation in full screen mode.
-        // https://github.com/KhronosGroup/MoltenVK/issues/808
-        swap_chain_desc_.BufferCount = 3;
+            // We need at least 3 buffers in Metal to avoid massive
+            // performance degradation in full screen mode.
+            // https://github.com/KhronosGroup/MoltenVK/issues/808
+            swap_chain_desc_.BufferCount = 3;
         #endif
         swap_chain_desc_.Width = 1;
         swap_chain_desc_.Height = 1;
 
         #if PLATFORM_MACOS
-        if (!create_device_and_swap_chain_metal(window))
+            if (!create_device_and_swap_chain_metal(window))
+                assert(false);
+        #else
             assert(false);
         #endif
+
+        assert(device_);
+        assert(context_);
+        assert(swap_chain_);
 
         create_pipeline_state();
         create_vertex_buffer();
         create_index_buffer();
+
+        // In Metal, FinishFrame must be called from the same thread
+        // that issued rendering commands. On MacOS, however, rendering
+        // happens in DisplayLinkCallback which is called from some other
+        // thread. To avoid issues with autorelease pool, we have to pop
+        // it now by calling FinishFrame.
+        #if METAL_SUPPORTED
+            context_->Flush();
+            context_->FinishFrame();
+        #endif
     }
+
+    //static double framerate = 6000;
 
     void GraphicsEngine::start()
     {
-        double framerate = 0.001;
-
-        double last_time = timer_.GetElapsedTime();
-
-        while (!quit_)
-        {
-            double current_time = timer_.GetElapsedTime();
-
-            if (current_time - last_time >= 1.0 / framerate)
-            {
-                last_time = current_time;
-
-                update();
-                render();
-                present();
-            }
-        }
+        update();
+        render();
+        present();
     }
 
     void GraphicsEngine::stop()
     {
         quit_ = true;
+    }
+
+    void GraphicsEngine::resize(uint32_t width, uint32_t height)
+    {
+        swap_chain_->Resize(width, height);
     }
 
     // MARK: - Private
@@ -89,7 +102,7 @@ namespace Diligent
         /* ---- */
 
         /// Clear the back buffer
-        const float clear_color[] = {0.0f, 0.0f, 0.0f, 1.0f};
+        const float clear_color[] = {0.01f, 0.01f, 0.01f, 1.0f};
 
         /// Before rendering anything on the screen we want to clear it:
         /// Let the engine perform required state transitions
@@ -133,9 +146,7 @@ namespace Diligent
 
     void GraphicsEngine::present()
     {
-        if (!swap_chain_)
-            return;
-
+        assert(swap_chain_);
         swap_chain_->Present(vsync_enabled_ ? 1 : 0);
     }
 

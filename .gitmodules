@@ -4,9 +4,6 @@
 [submodule "submodules/DiligentCorePro"]
 	path = submodules/DiligentCorePro
 	url = https://github.com/znly/DiligentCorePro
-[submodule "submodules/DiligentFX"]
-	path = submodules/DiligentFX
-	url = https://github.com/DiligentGraphics/DiligentFX
-[submodule "submodules/DiligentTools"]
-	path = submodules/DiligentTools
-	url = https://github.com/SebMenozzi/DiligentTools
+[submodule "submodules/glfw"]
+	path = submodules/glfw
+	url = https://github.com/glfw/glfw

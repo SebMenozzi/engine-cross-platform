@@ -1,0 +1,14 @@
+{
+    "files.associations": {
+        "cstdlib": "cpp",
+        "sstream": "cpp",
+        "system_error": "cpp",
+        "*.tcc": "cpp",
+        "deque": "cpp",
+        "forward_list": "cpp",
+        "list": "cpp",
+        "string": "cpp",
+        "vector": "cpp",
+        "valarray": "cpp"
+    }
+}

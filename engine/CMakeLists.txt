@@ -1,17 +1,15 @@
-add_library(Engine SHARED)
+add_executable(engine)
 
 # --------------
 
 set(SOURCE
+    ${CMAKE_CURRENT_LIST_DIR}/src/main.cpp
     ${CMAKE_CURRENT_LIST_DIR}/src/GraphicsEngine.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/src/GraphicsEngineMacOSImplem.mm
 )
 
 set(INCLUDE
-    ${CMAKE_CURRENT_LIST_DIR}/src/CrossPlatformGraphicsEngine.hpp
     ${CMAKE_CURRENT_LIST_DIR}/src/GraphicsEngine.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/src/GraphicsEngineInterface.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/src/GraphicsEngineMacOS.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/src/platform.hpp
 )
 
 set(SHADERS
@@ -23,37 +21,64 @@ set(ASSETS ${SHADERS})
 
 # --------------
 
-target_sources(Engine PRIVATE ${INCLUDE} ${SOURCE} ${SHADERS})
+target_sources(engine PRIVATE ${INCLUDE} ${SOURCE} ${SHADERS})
 
 # --------------
 
-set_target_properties(Engine PROPERTIES
-    FRAMEWORK TRUE
-    PUBLIC_HEADER "${INCLUDE}"
-    MACOSX_FRAMEWORK_INFO_PLIST ${CMAKE_CURRENT_LIST_DIR}/Info.plist
-    XCODE_GENERATE_SCHEME TRUE
-    XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "co.seb.engine-lib"
-    XCODE_ATTRIBUTE_DEFINES_MODULE "YES"
-    XCODE_ATTRIBUTE_CLANG_ENABLE_OBJC_ARC "YES"
-    XCODE_ATTRIBUTE_INSTALL_PATH "@rpath"
-    XCODE_ATTRIBUTE_SYMROOT "${PROJECT_BINARY_DIR}"
-    # Generate dsym for all build types to ensure symbols available in profiling
-    XCODE_ATTRIBUTE_GCC_GENERATE_DEBUGGING_SYMBOLS "YES"
-)
+if(PLATFORM_MACOS)
+    if (CMAKE_GENERATOR MATCHES "Xcode")
+        # The Xcode scheme parameters below require CMake 3.15 or newer.
+        cmake_minimum_required(VERSION 3.15)
+
+        set(CODE_SIGN_STYLE "Manual")
+        set(DEVELOPMENT_TEAM "") 
+        set(CODE_SIGN_IDENTITY "")
+        set(CODE_SIGNING_REQUIRED "NO")
+
+        set(RESOURCES
+            ${CMAKE_CURRENT_SOURCE_DIR}/Resources/AppIcon.xcassets
+        )
+
+        # Only Xcode can process the xcassets bundle, so ignore it for other generators.
+        set_target_properties(engine
+            PROPERTIES
+            MACOSX_BUNDLE TRUE
+            MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Info.plist"
+            RESOURCE "${RESOURCES}"
+            XCODE_GENERATE_SCHEME TRUE
+            XCODE_ATTRIBUTE_CLANG_ENABLE_OBJC_ARC NO
+            XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "co.seb.engine-app"
+            XCODE_ATTRIBUTE_ASSETCATALOG_COMPILER_APPICON_NAME "AppIcon"
+            XCODE_ATTRIBUTE_CODE_SIGN_STYLE "${CODE_SIGN_STYLE}"
+            XCODE_ATTRIBUTE_DEVELOPMENT_TEAM "${DEVELOPMENT_TEAM}"
+            XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY "${CODE_SIGN_IDENTITY}"
+            CMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_REQUIRED "${CODE_SIGNING_REQUIRED}"
+        )
+        target_sources(engine
+            PRIVATE
+            "$<TARGET_PROPERTY:RESOURCE>"
+        )
+    endif()
+
+    target_sources(engine
+        PRIVATE
+        ${CMAKE_CURRENT_LIST_DIR}/src/platform.mm
+    )
+
+    target_link_libraries(engine
+        PRIVATE
+        "-framework CoreGraphics"
+        "-framework CoreLocation"
+        "-framework QuartzCore"
+        "-framework Metal"
+        "-framework MetalKit"
+        "-framework AppKit"
+    )
+endif()
 
 # --------------
 
-target_link_libraries(Engine
-    PUBLIC
-    "-framework CoreGraphics"
-    "-framework CoreLocation"
-    "-framework QuartzCore"
-    "-framework Metal"
-)
-
-# --------------
-
-target_include_directories(Engine PRIVATE
+target_include_directories(engine PRIVATE
     ${CMAKE_CURRENT_LIST_DIR}/src
     ${CMAKE_CURRENT_LIST_DIR}/assets
     ${CMAKE_CURRENT_LIST_DIR}/assets/shaders
@@ -61,17 +86,14 @@ target_include_directories(Engine PRIVATE
 
 get_supported_backends(ENGINE_LIBRARIES)
 
-target_link_libraries(Engine PRIVATE
+target_link_libraries(engine PRIVATE
     Diligent-Common
     Diligent-GraphicsTools
     Diligent-BuildSettings
     Diligent-TargetPlatform
     Diligent-GraphicsAccessories
-    Diligent-TextureLoader
-    Diligent-RenderStateNotation
-    DiligentFX
-    Diligent-Imgui
     ${ENGINE_LIBRARIES}
+    GLFW_LIBRARY
 )
 
 # --------------

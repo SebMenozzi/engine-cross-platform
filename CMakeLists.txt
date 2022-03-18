@@ -13,7 +13,7 @@ set(CMAKE_XCODE_SCHEME_MALLOC_GUARD_EDGES YES)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_CXX_FLAGS "-Wno-deprecated-declarations -Wno-missing-field-initializers -Wno-unused-function -Wno-unused-parameter -Wno-switch -fvisibility=hidden")
 
 add_subdirectory(submodules)
 add_subdirectory(engine)
-add_subdirectory(macos-app)

@@ -7,17 +7,16 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <thread>
+#include <atomic>
 
 #include "EngineFactory.h"
 #include "RenderDevice.h"
 #include "DeviceContext.h"
 #include "SwapChain.h"
-#include "Image.h"
 #include "BasicMath.hpp" // float4x4
 #include "MapHelper.hpp"
 #include "Timer.hpp"
-
-#include "CrossPlatformGraphicsEngine.hpp"
 
 using Buffer = std::vector<uint8_t>;
 
@@ -25,13 +24,17 @@ namespace Diligent
 {
     class ImGuiImplDiligent;
 
-    class GraphicsEngine : public CrossPlatformGraphicsEngine
+    class GraphicsEngine
     {
         public:
-            virtual void start() override;
-            virtual void stop() override;
+            GraphicsEngine();
 
-        protected:
+            void initialize(const NativeWindow* window);
+            void start();
+            void stop();
+            void resize(uint32_t width, uint32_t height);
+
+        private:
             IRenderDevice* device_ = nullptr;
             IDeviceContext* context_ = nullptr;
             ISwapChain* swap_chain_ = nullptr;
@@ -48,10 +51,8 @@ namespace Diligent
             float4x4 world_view_projection_matrix_;
 
             Timer timer_;
+            double last_time_ = 0;
 
-            void initialize_diligent_engine(const NativeWindow* window);
-
-        private:
             void update();
             void render();
             void present();
