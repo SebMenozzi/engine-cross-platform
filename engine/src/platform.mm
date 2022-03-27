@@ -14,12 +14,18 @@
             NSLog(@"Metal View Supported.");
 
             NSWindow* window = static_cast<NSWindow*>(native_window_handle);
-            [window setBackgroundColor: NSColor.redColor];
+            [window setBackgroundColor: NSColor.blackColor];
 
             MTKView* mtkView = [[MTKView alloc] initWithFrame: window.contentView.bounds];
             mtkView.device = MTLCreateSystemDefaultDevice();
-    
-            window.contentView = mtkView;
+            mtkView.translatesAutoresizingMaskIntoConstraints = false;
+
+            [window.contentView addSubview:mtkView];
+
+            [mtkView.leadingAnchor constraintEqualToAnchor:window.contentView.leadingAnchor].active = YES;
+            [mtkView.trailingAnchor constraintEqualToAnchor:window.contentView.trailingAnchor].active = YES;
+            [mtkView.topAnchor constraintEqualToAnchor:window.contentView.topAnchor].active = YES;
+            [mtkView.bottomAnchor constraintEqualToAnchor:window.contentView.bottomAnchor].active = YES;
 
             return mtkView;
         }

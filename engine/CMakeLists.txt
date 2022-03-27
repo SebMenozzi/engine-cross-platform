@@ -4,24 +4,24 @@ add_executable(engine)
 
 set(SOURCE
     ${CMAKE_CURRENT_LIST_DIR}/src/main.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/src/GraphicsEngine.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/src/graphics_engine.cpp
 )
 
 set(INCLUDE
-    ${CMAKE_CURRENT_LIST_DIR}/src/GraphicsEngine.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/src/graphics_engine.hpp
     ${CMAKE_CURRENT_LIST_DIR}/src/platform.hpp
 )
 
 set(SHADERS
-    ${CMAKE_CURRENT_LIST_DIR}/assets/shaders/Cube.vsh
-    ${CMAKE_CURRENT_LIST_DIR}/assets/shaders/Cube.psh
+    ${CMAKE_CURRENT_LIST_DIR}/assets/shaders/cube/cube.vsh
+    ${CMAKE_CURRENT_LIST_DIR}/assets/shaders/cube/cube.psh
 )
 
 set(ASSETS ${SHADERS})
 
 # --------------
 
-target_sources(engine PRIVATE ${INCLUDE} ${SOURCE} ${SHADERS})
+target_sources(engine PRIVATE ${INCLUDE} ${SOURCE})
 
 # --------------
 
@@ -80,8 +80,6 @@ endif()
 
 target_include_directories(engine PRIVATE
     ${CMAKE_CURRENT_LIST_DIR}/src
-    ${CMAKE_CURRENT_LIST_DIR}/assets
-    ${CMAKE_CURRENT_LIST_DIR}/assets/shaders
 )
 
 get_supported_backends(ENGINE_LIBRARIES)

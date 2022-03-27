@@ -14,7 +14,7 @@
 #include <GLFW/glfw3native.h>
 
 #include "platform.hpp"
-#include "GraphicsEngine.hpp"
+#include "graphics_engine.hpp"
 
 static int window_width = 1280;
 static int window_height = 720;
@@ -22,7 +22,7 @@ static int window_height = 720;
 static GLFWwindow *window = nullptr;
 
 static bool framebuffer_size_changed = false;
-static bool focused = true;
+static bool cursor_disabled = false;
 
 static std::shared_ptr<Diligent::GraphicsEngine> engine = {};
 
@@ -31,57 +31,36 @@ static void window_close_callback(GLFWwindow *window)
     glfwSetWindowShouldClose(window, GLFW_TRUE);
 }
 
-static void scroll_callback(GLFWwindow *window, double scrollx, double scrolly)
-{
-
-}
-
-static void cursor_pos_callback(GLFWwindow *window, double x, double y)
-{
-
-}
-
-static void mouse_button_callback(GLFWwindow *window, int button, int action, int mods)
-{
-
-}
-
 static void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods)
 {
     // Ignore input if window should close
-    if (glfwWindowShouldClose(window)) {
+    if (glfwWindowShouldClose(window))
         return;
-    }
 
     switch (key) {
         case GLFW_KEY_ESCAPE:
             if (action == GLFW_PRESS)
                 window_close_callback(window);
             break;
+        case GLFW_KEY_C:
+            if (action == GLFW_PRESS)
+            {
+                if (cursor_disabled)
+                    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+                else
+                    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+
+                cursor_disabled = !cursor_disabled;
+            }
         default:
             break;
     }
-}
-
-static void char_callback(GLFWwindow *window, unsigned int c)
-{
-
 }
 
 static void framebuffer_resize_callback(GLFWwindow *window, int fWidth, int fHeight)
 {
     // Indicate that the frame buffer size has changed for the next frame
     framebuffer_size_changed = true;
-}
-
-static void drop_callback(GLFWwindow *window, int count, const char **paths)
-{
-
-}
-
-static void window_focused_callback(GLFWwindow *window, int new_focused)
-{
-    focused = new_focused;
 }
 
 static Diligent::NativeWindow get_native_window()
@@ -101,16 +80,11 @@ static Diligent::NativeWindow get_native_window()
     return native_window;
 }
 
-static void error_callback(int code, const char *description)
-{
-    std::cerr << "GLFW error (code " << code << "): " << description << std::endl;
-}
-
 static void init_engine()
 {
-    glfwSetErrorCallback(error_callback);
+    glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_TRUE);
 
-    window = glfwCreateWindow(window_width, window_height, "App", nullptr, nullptr);
+    window = glfwCreateWindow(window_width, window_height, "App", NULL, NULL);
     if (!window)
         return glfwTerminate();
 
@@ -125,30 +99,22 @@ static void init_engine()
         glfwWindowHint(GLFW_COCOA_RETINA_FRAMEBUFFER, GLFW_TRUE);
     #endif
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+    glfwWindowHint(GLFW_FOCUSED, GLFW_TRUE);
+    glfwWindowHint(GLFW_VISIBLE, GLFW_TRUE);
 
-    glfwSetMouseButtonCallback(window, mouse_button_callback);
-    glfwSetCursorPosCallback(window, cursor_pos_callback);
-    glfwSetScrollCallback(window, scroll_callback);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+
     glfwSetWindowCloseCallback(window, window_close_callback);
     glfwSetKeyCallback(window, key_callback);
-    glfwSetCharCallback(window, char_callback);
     glfwSetFramebufferSizeCallback(window, framebuffer_resize_callback);
-    glfwSetDropCallback(window, drop_callback);
-    glfwSetWindowFocusCallback(window, window_focused_callback);
 
-    int32_t fWidth = 0, fHeight = 0, wWidth = 0, wHeight = 0;
-    glfwGetFramebufferSize(window, &fWidth, &fHeight);
-    glfwGetWindowSize(window, &wWidth, &wHeight);
-
-    engine->resize(fWidth, fHeight);
-
-    //glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+    int32_t width = 0, height = 0;
+    glfwGetFramebufferSize(window, &width, &height);
+    engine->resize(width, height);
 }
 
 int main(int argc, char *argv[])
 {
-    glfwSetErrorCallback(error_callback);
-
     // Init glfw
     if (!glfwInit())
     {
@@ -158,40 +124,22 @@ int main(int argc, char *argv[])
 
     init_engine();
 
-    #if PLATFORM_MACOS 
-        // GLFW + CATALINA workaround. This fixes the empty window bug. See
-        // https://github.com/glfw/glfw/issues/1334
-        int x, y;
-        glfwGetWindowPos(window, &x, &y);
-        glfwSetWindowPos(window, ++x, y);
-    #endif
-
-    // Give it a chance to shutdown cleanly on CTRL-C
-    signal(SIGINT, [](int) {
-        if (!glfwWindowShouldClose(window)) {
-            glfwSetWindowShouldClose(window, 1);
-            glfwPostEmptyEvent();
-        } else {
-            exit(1);
-        }
-    });
-
     while (!glfwWindowShouldClose(window))
     {
         glfwPollEvents();
 
         // If the framebuffer size has changed, let's resize the app
-        if (framebuffer_size_changed) {
+        if (framebuffer_size_changed)
+        {
             framebuffer_size_changed = false;
 
             // Get the new framebuffer size
             int32_t width = 0, height = 0;
             glfwGetFramebufferSize(window, &width, &height);
-
             engine->resize(width, height);
         }
 
-        engine->start();
+        engine->update();
     }
     
     engine->stop();

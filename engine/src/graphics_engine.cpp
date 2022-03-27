@@ -5,7 +5,7 @@
 #include "EngineFactoryMtl.h"
 #endif
 
-#include "GraphicsEngine.hpp"
+#include "graphics_engine.hpp"
 
 namespace Diligent
 {
@@ -28,7 +28,7 @@ namespace Diligent
         swap_chain_desc_.Height = 1;
 
         #if PLATFORM_MACOS
-            if (!create_device_and_swap_chain_metal(window))
+            if (!create_device_and_swap_chain_metal_(window))
                 assert(false);
         #else
             assert(false);
@@ -37,29 +37,27 @@ namespace Diligent
         assert(device_);
         assert(context_);
         assert(swap_chain_);
-
-        create_pipeline_state();
-        create_vertex_buffer();
-        create_index_buffer();
-
-        // In Metal, FinishFrame must be called from the same thread
-        // that issued rendering commands. On MacOS, however, rendering
-        // happens in DisplayLinkCallback which is called from some other
-        // thread. To avoid issues with autorelease pool, we have to pop
-        // it now by calling FinishFrame.
-        #if METAL_SUPPORTED
-            context_->Flush();
-            context_->FinishFrame();
-        #endif
+        
+        create_pipeline_state_();
+        create_vertex_buffer_();
+        create_index_buffer_();
     }
 
-    //static double framerate = 6000;
+    static double max_framerate = 60.0;
 
-    void GraphicsEngine::start()
+    void GraphicsEngine::update()
     {
-        update();
-        render();
-        present();
+        double current_time = timer_.GetElapsedTime();
+        double diff = current_time - last_time_;
+
+        if (diff >= 1.0 / max_framerate)
+        {
+            last_time_ = current_time;
+
+            update_();
+            render_();
+            present_();
+        }
     }
 
     void GraphicsEngine::stop()
@@ -74,7 +72,7 @@ namespace Diligent
 
     // MARK: - Private
 
-    void GraphicsEngine::update()
+    void GraphicsEngine::update_()
     {
         auto time = timer_.GetElapsedTime();
 
@@ -85,18 +83,17 @@ namespace Diligent
         float4x4 view = float4x4::Translation(0.f, 0.0f, 5.0f);
 
         // Get projection matrix adjusted to the current screen orientation
-        auto projection = get_adjusted_projection_matrix(PI_F / 4.0f, 0.1f, 100.f);
+        auto projection = get_adjusted_projection_matrix_(45.0f, 0.1f, 100.f);
 
         // Compute world-view-projection matrix
         world_view_projection_matrix_ = transform * view * projection;
     }
 
-    void GraphicsEngine::render()
+    void GraphicsEngine::render_()
     {
-        context_->SetRenderTargets(0, nullptr, nullptr, RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
-
         auto* pRTV = swap_chain_->GetCurrentBackBufferRTV();
         auto* pDSV = swap_chain_->GetDepthBufferDSV();
+
         context_->SetRenderTargets(1, &pRTV, pDSV, RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
 
         /* ---- */
@@ -140,17 +137,17 @@ namespace Diligent
 
         /* ---- */
 
-        // Restore default render target in case the sample has changed it
+        // Restore default render target
         context_->SetRenderTargets(1, &pRTV, pDSV, RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
     }
 
-    void GraphicsEngine::present()
+    void GraphicsEngine::present_()
     {
         assert(swap_chain_);
         swap_chain_->Present(vsync_enabled_ ? 1 : 0);
     }
 
-    float4x4 GraphicsEngine::get_adjusted_projection_matrix(float fov, float near, float far) const
+    float4x4 GraphicsEngine::get_adjusted_projection_matrix_(float fov, float near, float far) const
     {
         const auto& swap_chain_desc = swap_chain_->GetDesc();
 
@@ -166,7 +163,7 @@ namespace Diligent
         return projection;
     }
 
-    bool GraphicsEngine::create_device_and_swap_chain_metal(const NativeWindow* window)
+    bool GraphicsEngine::create_device_and_swap_chain_metal_(const NativeWindow* window)
     {
         auto *engine_factory = Diligent::GetEngineFactoryMtl();
 
@@ -181,12 +178,12 @@ namespace Diligent
         if (device_ == nullptr || context_ == nullptr)
             return false;
 
-        create_swap_chain_metal(window);
+        create_swap_chain_metal_(window);
 
         return true;
     }
 
-    void GraphicsEngine::create_swap_chain_metal(const NativeWindow* window)
+    void GraphicsEngine::create_swap_chain_metal_(const NativeWindow* window)
     {
         // Get a pointer to the Metal engine factory
         auto *engine_factory = Diligent::GetEngineFactoryMtl();
@@ -210,19 +207,17 @@ namespace Diligent
         device->Release();
     }
 
-    std::optional<Buffer> GraphicsEngine::read_file(const std::filesystem::path &path)
+    std::optional<Buffer> GraphicsEngine::read_file_(const std::filesystem::path &path)
     {
         // Verify that the provided file path exists on the filesystem
         std::error_code error_code;
-        if (!std::filesystem::exists(path, error_code)) {
+        if (!std::filesystem::exists(path, error_code))
             return {};
-        }
 
         // Open the file with read permissions
         std::ifstream stream(path.native(), std::ios::in | std::ios::binary | std::ios::ate);
-        if (!stream) {
+        if (!stream)
             return {};
-        }
 
         // Resize the output data to accomodate the file's content
         Buffer bytes;
@@ -231,15 +226,14 @@ namespace Diligent
         // Read the whole file
         stream.seekg(0);
         stream.read(reinterpret_cast<char *>(bytes.data()), bytes.size());
-        if (stream.fail()) {
+        if (stream.fail())
             return {};
-        }
 
         // Return the resulting file's content
         return bytes;
     }
 
-    void GraphicsEngine::create_pipeline_state()
+    void GraphicsEngine::create_pipeline_state_()
     {
         // Pipeline state object encompasses configuration of all GPU stages
 
@@ -263,7 +257,7 @@ namespace Diligent
         pso_info.GraphicsPipeline.PrimitiveTopology = PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
         // No back face culling for this tutorial
         pso_info.GraphicsPipeline.RasterizerDesc.CullMode = CULL_MODE_BACK;
-        // Disable depth testing
+        // Enable depth testing
         pso_info.GraphicsPipeline.DepthStencilDesc.DepthEnable = True;
         // clang-format on
 
@@ -275,21 +269,14 @@ namespace Diligent
         shader_info.UseCombinedTextureSamplers = true;
 
         // Create a vertex shader
-        const auto vertex_shader_file = read_file("/Users/sebasteinmenozzi/Documents/engine-cross-platform/engine/assets/shaders/Cube.vsh");
+        const auto vertex_shader_file = read_file_("./engine/assets/shaders/cube/cube.vsh");
         assert(vertex_shader_file.has_value());
-
-        //auto *engine_factory = Diligent::GetEngineFactoryMtl();
-
-        //RefCntAutoPtr<IShaderSourceInputStreamFactory> shader_source_factory;
-        //engine_factory->CreateDefaultShaderSourceStreamFactory(nullptr, &shader_source_factory);
-        //shader_info.pShaderSourceStreamFactory = shader_source_factory;
 
         RefCntAutoPtr<IShader> vertex_shader;
         {
             shader_info.Desc.ShaderType = SHADER_TYPE_VERTEX;
             shader_info.EntryPoint = "main";
             shader_info.Desc.Name = "Cube vertex shader";
-            //shader_info.FilePath = "/Users/sebasteinmenozzi/Documents/engine-cross-platform/engine/assets/shaders/Cube.vsh";
             shader_info.Source = reinterpret_cast<const char *>(vertex_shader_file->data());
             shader_info.SourceLength = vertex_shader_file->size();
             device_->CreateShader(shader_info, &vertex_shader);
@@ -307,7 +294,7 @@ namespace Diligent
 
         // Create a pixel shader
 
-        const auto pixel_shader_file = read_file("/Users/sebasteinmenozzi/Documents/engine-cross-platform/engine/assets/shaders/Cube.psh");
+        const auto pixel_shader_file = read_file_("./engine/assets/shaders/cube/cube.psh");
         assert(pixel_shader_file.has_value());
 
         RefCntAutoPtr<IShader> pixel_shader;
@@ -317,7 +304,6 @@ namespace Diligent
             shader_info.Desc.Name = "Cube pixel shader";
             shader_info.Source = reinterpret_cast<const char *>(pixel_shader_file->data());
             shader_info.SourceLength = pixel_shader_file->size();
-            //shader_info.FilePath = "/Users/sebasteinmenozzi/Documents/engine-cross-platform/engine/assets/shaders/Cube.psh";
             device_->CreateShader(shader_info, &pixel_shader);
         }
 
@@ -352,7 +338,7 @@ namespace Diligent
         pso_->CreateShaderResourceBinding(&srb_, true);
     }
 
-    void GraphicsEngine::create_vertex_buffer()
+    void GraphicsEngine::create_vertex_buffer_()
     {
         // Layout of this structure matches the one we defined in the pipeline state
         struct Vertex
@@ -363,33 +349,33 @@ namespace Diligent
 
         // Cube vertices
 
-        //      (-1,+1,+1)________________(+1,+1,+1)
-        //               /|              /|
-        //              / |             / |
-        //             /  |            /  |
-        //            /   |           /   |
-        //(-1,-1,+1) /____|__________/(+1,-1,+1)
-        //           |    |__________|____|
-        //           |   /(-1,+1,-1) |    /(+1,+1,-1)
-        //           |  /            |   /
-        //           | /             |  /
-        //           |/              | /
-        //           /_______________|/
-        //        (-1,-1,-1)       (+1,-1,-1)
-        //
+        //       (-1,+1,+1)________________(+1,+1,+1)
+        //                /|              /|
+        //               / |             / |
+        //              /  |            /  |
+        //             /   |           /   |
+        // (-1,-1,+1) /____|__________/(+1,-1,+1)
+        //            |    |__________|____|
+        //            |   /(-1,+1,-1) |    /(+1,+1,-1)
+        //            |  /            |   /
+        //            | /             |  /
+        //            |/              | /
+        //            /_______________|/
+        //         (-1,-1,-1)       (+1,-1,-1)
+        // 
 
         // clang-format off
         Vertex vertices[8] =
         {
             {float3(-1,-1,-1), float4(1,0,0,1)},
-            {float3(-1,+1,-1), float4(0,1,0,1)},
-            {float3(+1,+1,-1), float4(0,0,1,1)},
-            {float3(+1,-1,-1), float4(1,1,1,1)},
+            {float3(-1,+1,-1), float4(1,0,0,1)},
+            {float3(+1,+1,-1), float4(1,0,0,1)},
+            {float3(+1,-1,-1), float4(1,0,0,1)},
 
-            {float3(-1,-1,+1), float4(1,1,0,1)},
-            {float3(-1,+1,+1), float4(0,1,1,1)},
-            {float3(+1,+1,+1), float4(1,0,1,1)},
-            {float3(+1,-1,+1), float4(0.2f,0.2f,0.2f,1)},
+            {float3(-1,-1,+1), float4(0,0,1,1)},
+            {float3(-1,+1,+1), float4(0,0,1,1)},
+            {float3(+1,+1,+1), float4(0,0,1,1)},
+            {float3(+1,-1,+1), float4(0,0,1,1)},
         };
         // clang-format on
 
@@ -407,7 +393,7 @@ namespace Diligent
         device_->CreateBuffer(vertex_buffer_desc, &vertex_data, &cube_vertex_buffer_);
     }
 
-    void GraphicsEngine::create_index_buffer()
+    void GraphicsEngine::create_index_buffer_()
     {
         // clang-format off
         Uint32 indices[] =

@@ -8,6 +8,7 @@ debug:
 	mkdir -p build
 	cd build; cmake -DCMAKE_BUILD_TYPE=DEBUG ..
 	cd build; make -j8
+	./build/engine/engine
 
 clean:
 	rm -rf build

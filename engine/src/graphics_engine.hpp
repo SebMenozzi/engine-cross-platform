@@ -30,7 +30,7 @@ namespace Diligent
             GraphicsEngine();
 
             void initialize(const NativeWindow* window);
-            void start();
+            void update();
             void stop();
             void resize(uint32_t width, uint32_t height);
 
@@ -53,16 +53,16 @@ namespace Diligent
             Timer timer_;
             double last_time_ = 0;
 
-            void update();
-            void render();
-            void present();
+            void update_();
+            void render_();
+            void present_();
 
-            float4x4 get_adjusted_projection_matrix(float fov, float near, float far) const;
-            bool create_device_and_swap_chain_metal(const NativeWindow* window);
-            void create_swap_chain_metal(const NativeWindow* window);
-            std::optional<Buffer> read_file(const std::filesystem::path &path);
-            void create_pipeline_state();
-            void create_vertex_buffer();
-            void create_index_buffer();
+            float4x4 get_adjusted_projection_matrix_(float fov, float near, float far) const;
+            bool create_device_and_swap_chain_metal_(const NativeWindow* window);
+            void create_swap_chain_metal_(const NativeWindow* window);
+            std::optional<Buffer> read_file_(const std::filesystem::path &path);
+            void create_pipeline_state_();
+            void create_vertex_buffer_();
+            void create_index_buffer_();
     };
 }
