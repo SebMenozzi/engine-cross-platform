@@ -21,10 +21,9 @@ static int window_height = 720;
 
 static GLFWwindow *window = nullptr;
 
-static bool framebuffer_size_changed = false;
 static bool cursor_disabled = false;
 
-static std::shared_ptr<Diligent::GraphicsEngine> engine = {};
+static std::shared_ptr<engine::GraphicsEngine> graphics_engine = {};
 
 static void window_close_callback(GLFWwindow *window)
 {
@@ -59,8 +58,7 @@ static void key_callback(GLFWwindow *window, int key, int scancode, int action, 
 
 static void framebuffer_resize_callback(GLFWwindow *window, int fWidth, int fHeight)
 {
-    // Indicate that the frame buffer size has changed for the next frame
-    framebuffer_size_changed = true;
+    graphics_engine->resize(fWidth, fHeight);
 }
 
 static Diligent::NativeWindow get_native_window()
@@ -89,10 +87,10 @@ static void init_engine()
         return glfwTerminate();
 
     // Create new instance of the engine
-    engine = std::make_unique<Diligent::GraphicsEngine>();
+    graphics_engine = std::make_unique<engine::GraphicsEngine>();
 
     Diligent::NativeWindow native_window = get_native_window();
-    engine->initialize(&native_window);
+    graphics_engine->initialize(&native_window);
 
      // Setup the window's properties
     #ifdef PLATFORM_MACOS
@@ -110,11 +108,69 @@ static void init_engine()
 
     int32_t width = 0, height = 0;
     glfwGetFramebufferSize(window, &width, &height);
-    engine->resize(width, height);
+    graphics_engine->resize(width, height);
+}
+
+#ifdef PLATFORM_LINUX
+    constexpr int kMaxFd = 32767;
+#else
+    constexpr int kMaxFd = 16384;
+#endif
+
+#ifdef PLATFORM_LINUX
+    constexpr int kMaxMemlock = 16 * 1024 * 1024;
+#else
+    constexpr int kMaxMemlock = 65535;
+#endif
+
+void set_os_limit(int val, int feature)
+{
+    [[maybe_unused]] const char* label = [&] {
+        switch (feature) {
+            // This specifies a value one greater than the maximum file
+            // descriptor number that can be opened by this process.
+            case RLIMIT_NOFILE:
+                return "max open files";
+            // This is the maximum number of bytes of memory that may be
+            // locked into RAM.
+            case RLIMIT_MEMLOCK:
+                return "max locked memory";
+            default:
+                return "unknown";
+        }
+    }();
+
+    rlimit rlp;
+    int result = getrlimit(feature, &rlp);
+    if (result != 0)
+    {
+        [[maybe_unused]] int err = errno;
+        std::cerr << "Failed to get  " << label << " limit: " << err << std::endl;
+        return;
+    }
+
+    std::cout << "Current value for " << label << ": " << rlp.rlim_cur << std::endl;
+
+    rlp.rlim_cur = val;
+    rlp.rlim_max = val;
+
+    if (setrlimit(feature, &rlp) != 0)
+    {
+        [[maybe_unused]] int err = errno;
+        std::cerr << "Failed to set " << label << ". Errno: " << std::endl;
+    } 
+    else
+    {
+        std::cout << label << " set to " << val << std::endl;
+    }
 }
 
 int main(int argc, char *argv[])
 {
+
+    set_os_limit(kMaxFd, RLIMIT_NOFILE);
+    set_os_limit(kMaxMemlock, RLIMIT_MEMLOCK);
+
     // Init glfw
     if (!glfwInit())
     {
@@ -128,21 +184,10 @@ int main(int argc, char *argv[])
     {
         glfwPollEvents();
 
-        // If the framebuffer size has changed, let's resize the app
-        if (framebuffer_size_changed)
-        {
-            framebuffer_size_changed = false;
-
-            // Get the new framebuffer size
-            int32_t width = 0, height = 0;
-            glfwGetFramebufferSize(window, &width, &height);
-            engine->resize(width, height);
-        }
-
-        engine->update();
+        graphics_engine->update();
     }
     
-    engine->stop();
+    graphics_engine->stop();
 
     glfwTerminate();
 

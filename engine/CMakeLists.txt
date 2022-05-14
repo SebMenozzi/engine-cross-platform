@@ -7,11 +7,6 @@ set(SOURCE
     ${CMAKE_CURRENT_LIST_DIR}/src/graphics_engine.cpp
 )
 
-set(INCLUDE
-    ${CMAKE_CURRENT_LIST_DIR}/src/graphics_engine.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/src/platform.hpp
-)
-
 set(SHADERS
     ${CMAKE_CURRENT_LIST_DIR}/assets/shaders/cube/cube.vsh
     ${CMAKE_CURRENT_LIST_DIR}/assets/shaders/cube/cube.psh
@@ -21,7 +16,15 @@ set(ASSETS ${SHADERS})
 
 # --------------
 
-target_sources(engine PRIVATE ${INCLUDE} ${SOURCE})
+target_sources(engine PRIVATE ${SOURCE})
+
+target_include_directories(engine PRIVATE
+    ${CMAKE_CURRENT_LIST_DIR}/src
+    ${CMAKE_CURRENT_LIST_DIR}/src/object
+    ${CMAKE_CURRENT_LIST_DIR}/src/utils
+)
+
+add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/src/object)
 
 # --------------
 
@@ -78,10 +81,6 @@ endif()
 
 # --------------
 
-target_include_directories(engine PRIVATE
-    ${CMAKE_CURRENT_LIST_DIR}/src
-)
-
 get_supported_backends(ENGINE_LIBRARIES)
 
 target_link_libraries(engine PRIVATE
@@ -90,11 +89,7 @@ target_link_libraries(engine PRIVATE
     Diligent-BuildSettings
     Diligent-TargetPlatform
     Diligent-GraphicsAccessories
+    Diligent-TextureLoader
     ${ENGINE_LIBRARIES}
     GLFW_LIBRARY
 )
-
-# --------------
-
-source_group("Sources" FILES ${SOURCE} ${INCLUDE})
-source_group("Assets" FILES ${ASSETS})

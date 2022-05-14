@@ -1,3 +1,4 @@
 # Cross Platform Engine
 
-To fetch all recursive submodules: run `git submodule update --init --recursive`
+- To update submodules: run `git submodule update --remote`
+- To fetch all recursive submodules: run `git submodule update --init --recursive`
