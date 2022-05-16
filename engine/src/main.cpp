@@ -14,15 +14,22 @@
 #include <GLFW/glfw3native.h>
 
 #include "platform.hpp"
+#include "camera.hpp"
 #include "graphics_engine.hpp"
+#include "maths_utils.hpp"
 
 static int window_width = 1280;
 static int window_height = 720;
 
+static bool is_speed_up = false;
+static double fov = 45.0f;
+static engine::camera::Direction move_direction;
+
 static GLFWwindow *window = nullptr;
 
-static bool cursor_disabled = false;
+static bool cursor_disabled = true;
 
+static std::shared_ptr<engine::camera::Camera> camera = {};
 static std::shared_ptr<engine::GraphicsEngine> graphics_engine = {};
 
 static void window_close_callback(GLFWwindow *window)
@@ -45,20 +52,85 @@ static void key_callback(GLFWwindow *window, int key, int scancode, int action, 
             if (action == GLFW_PRESS)
             {
                 if (cursor_disabled)
-                    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-                else
                     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+                else
+                    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
                 cursor_disabled = !cursor_disabled;
             }
+            break;
+        // Forward
+        case GLFW_KEY_UP: case GLFW_KEY_W:
+            if (action == GLFW_PRESS)
+                move_direction.forward = true;
+            else if (action == GLFW_RELEASE)
+                move_direction.forward = false;
+            break;
+        // Backward
+        case GLFW_KEY_DOWN: case GLFW_KEY_S:
+            if (action == GLFW_PRESS)
+                move_direction.backward = true;
+            else if (action == GLFW_RELEASE)
+                move_direction.backward = false;
+            break;
+        // Left
+        case GLFW_KEY_LEFT: case GLFW_KEY_A:
+            if (action == GLFW_PRESS)
+                move_direction.left = true;
+            else if (action == GLFW_RELEASE)
+                move_direction.left = false;
+            break;
+        // Right
+        case GLFW_KEY_RIGHT: case GLFW_KEY_D:
+            if (action == GLFW_PRESS)
+                move_direction.right = true;
+            else if (action == GLFW_RELEASE)
+                move_direction.right = false;
+            break;
+        // Up
+        case GLFW_KEY_SPACE:
+            if (action == GLFW_PRESS)
+                move_direction.up = true;
+            else if (action == GLFW_RELEASE)
+                move_direction.up = false;
+            break;
+        // Speed Up
+        case GLFW_KEY_LEFT_SHIFT: case GLFW_KEY_RIGHT_SHIFT:
+            if (action == GLFW_PRESS)
+                is_speed_up = true;
+            else if (action == GLFW_RELEASE)
+                is_speed_up = false;
+            break;
+        // Enable Gravity
+        case GLFW_KEY_G:
+            if (action == GLFW_PRESS)
+                camera->toggle_gravity();
+            break;
+
         default:
             break;
     }
+    
+    camera->set_move_direction(move_direction);
+    camera->set_is_speed_up(is_speed_up);
 }
 
-static void framebuffer_resize_callback(GLFWwindow *window, int fWidth, int fHeight)
+static void framebuffer_size_callback(GLFWwindow *window, int width, int height)
 {
-    graphics_engine->resize(fWidth, fHeight);
+    graphics_engine->resize(width, height);
+}
+
+static void mouse_callback(GLFWwindow *window, double x, double y)
+{
+    if (cursor_disabled)
+        camera->set_mouse_position(Diligent::float2(x, y));
+}
+
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+{
+    fov -= yoffset;
+    fov = engine::utils::clamp(fov, 45.0, 90.0);
+    graphics_engine->set_fov(fov);
 }
 
 static Diligent::NativeWindow get_native_window()
@@ -86,8 +158,19 @@ static void init_engine()
     if (!window)
         return glfwTerminate();
 
-    // Create new instance of the engine
-    graphics_engine = std::make_unique<engine::GraphicsEngine>();
+    // Cursor disabled by default
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+    if (glfwRawMouseMotionSupported())
+        glfwSetInputMode(window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
+
+    camera = std::make_unique<engine::camera::Camera>(
+        Diligent::float3(0, 0, -5), // Position
+        Diligent::float3(0, 1, 0), // Head is up (set to 0,-1,0 to look upside-down)
+        0.1,
+        0.05
+    );
+    graphics_engine = std::make_unique<engine::GraphicsEngine>(camera);
 
     Diligent::NativeWindow native_window = get_native_window();
     graphics_engine->initialize(&native_window);
@@ -100,77 +183,25 @@ static void init_engine()
     glfwWindowHint(GLFW_FOCUSED, GLFW_TRUE);
     glfwWindowHint(GLFW_VISIBLE, GLFW_TRUE);
 
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-
     glfwSetWindowCloseCallback(window, window_close_callback);
     glfwSetKeyCallback(window, key_callback);
-    glfwSetFramebufferSizeCallback(window, framebuffer_resize_callback);
+    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    glfwSetCursorPosCallback(window, mouse_callback);
+    glfwSetScrollCallback(window, scroll_callback);
 
     int32_t width = 0, height = 0;
     glfwGetFramebufferSize(window, &width, &height);
     graphics_engine->resize(width, height);
-}
 
-#ifdef PLATFORM_LINUX
-    constexpr int kMaxFd = 32767;
-#else
-    constexpr int kMaxFd = 16384;
-#endif
+    double x, y;
+    glfwGetCursorPos(window, &x, &y);
+    camera->set_mouse_position(Diligent::float2(x, y));
 
-#ifdef PLATFORM_LINUX
-    constexpr int kMaxMemlock = 16 * 1024 * 1024;
-#else
-    constexpr int kMaxMemlock = 65535;
-#endif
-
-void set_os_limit(int val, int feature)
-{
-    [[maybe_unused]] const char* label = [&] {
-        switch (feature) {
-            // This specifies a value one greater than the maximum file
-            // descriptor number that can be opened by this process.
-            case RLIMIT_NOFILE:
-                return "max open files";
-            // This is the maximum number of bytes of memory that may be
-            // locked into RAM.
-            case RLIMIT_MEMLOCK:
-                return "max locked memory";
-            default:
-                return "unknown";
-        }
-    }();
-
-    rlimit rlp;
-    int result = getrlimit(feature, &rlp);
-    if (result != 0)
-    {
-        [[maybe_unused]] int err = errno;
-        std::cerr << "Failed to get  " << label << " limit: " << err << std::endl;
-        return;
-    }
-
-    std::cout << "Current value for " << label << ": " << rlp.rlim_cur << std::endl;
-
-    rlp.rlim_cur = val;
-    rlp.rlim_max = val;
-
-    if (setrlimit(feature, &rlp) != 0)
-    {
-        [[maybe_unused]] int err = errno;
-        std::cerr << "Failed to set " << label << ". Errno: " << std::endl;
-    } 
-    else
-    {
-        std::cout << label << " set to " << val << std::endl;
-    }
+    graphics_engine->set_fov(fov);
 }
 
 int main(int argc, char *argv[])
 {
-
-    set_os_limit(kMaxFd, RLIMIT_NOFILE);
-    set_os_limit(kMaxMemlock, RLIMIT_MEMLOCK);
-
     // Init glfw
     if (!glfwInit())
     {

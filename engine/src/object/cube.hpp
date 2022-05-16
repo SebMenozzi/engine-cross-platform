@@ -26,30 +26,30 @@ namespace engine
         // MARK: - Public Methods
 
         const std::vector<Diligent::float3> CUBE_POSITIONS = {
-            Diligent::float3{-1, -1, -1}, Diligent::float3{-1, +1, -1}, Diligent::float3{+1, +1, -1}, Diligent::float3{+1, -1, -1}, // Bottom
-            Diligent::float3{-1, -1, -1}, Diligent::float3{-1, -1, +1}, Diligent::float3{+1, -1, +1}, Diligent::float3{+1, -1, -1}, // Front
-            Diligent::float3{+1, -1, -1}, Diligent::float3{+1, -1, +1}, Diligent::float3{+1, +1, +1}, Diligent::float3{+1, +1, -1}, // Right
-            Diligent::float3{+1, +1, -1}, Diligent::float3{+1, +1, +1}, Diligent::float3{-1, +1, +1}, Diligent::float3{-1, +1, -1}, // Back
-            Diligent::float3{-1, +1, -1}, Diligent::float3{-1, +1, +1}, Diligent::float3{-1, -1, +1}, Diligent::float3{-1, -1, -1}, // Left
-            Diligent::float3{-1, -1, +1}, Diligent::float3{+1, -1, +1}, Diligent::float3{+1, +1, +1}, Diligent::float3{-1, +1, +1}  // Top
+            Diligent::float3(-1, -1, -1), Diligent::float3(-1, +1, -1), Diligent::float3(+1, +1, -1), Diligent::float3(+1, -1, -1), // Bottom
+            Diligent::float3(-1, -1, -1), Diligent::float3(-1, -1, +1), Diligent::float3(+1, -1, +1), Diligent::float3(+1, -1, -1), // Front
+            Diligent::float3(+1, -1, -1), Diligent::float3(+1, -1, +1), Diligent::float3(+1, +1, +1), Diligent::float3(+1, +1, -1), // Right
+            Diligent::float3(+1, +1, -1), Diligent::float3(+1, +1, +1), Diligent::float3(-1, +1, +1), Diligent::float3(-1, +1, -1), // Back
+            Diligent::float3(-1, +1, -1), Diligent::float3(-1, +1, +1), Diligent::float3(-1, -1, +1), Diligent::float3(-1, -1, -1), // Left
+            Diligent::float3(-1, -1, +1), Diligent::float3(+1, -1, +1), Diligent::float3(+1, +1, +1), Diligent::float3(-1, +1, +1)  // Top
         };
 
         const std::vector<Diligent::float3> CUBE_NORMALS = {
-            Diligent::float3{0, 0, -1}, Diligent::float3{0, 0, -1}, Diligent::float3{0, 0, -1}, Diligent::float3{0, 0, -1}, // Bottom
-            Diligent::float3{0, -1, 0}, Diligent::float3{0, -1, 0}, Diligent::float3{0, -1, 0}, Diligent::float3{0, -1, 0}, // Front
-            Diligent::float3{+1, 0, 0}, Diligent::float3{+1, 0, 0}, Diligent::float3{+1, 0, 0}, Diligent::float3{+1, 0, 0}, // Right
-            Diligent::float3{0, +1, 0}, Diligent::float3{0, +1, 0}, Diligent::float3{0, +1, 0}, Diligent::float3{0, +1, 0}, // Back
-            Diligent::float3{-1, 0, 0}, Diligent::float3{-1, 0, 0}, Diligent::float3{-1, 0, 0}, Diligent::float3{-1, 0, 0}, // Left
-            Diligent::float3{0, 0, +1}, Diligent::float3{0, 0, +1}, Diligent::float3{0, 0, +1}, Diligent::float3{0, 0, +1}  // Top
+            Diligent::float3(0, 0, -1), Diligent::float3(0, 0, -1), Diligent::float3(0, 0, -1), Diligent::float3(0, 0, -1), // Bottom
+            Diligent::float3(0, -1, 0), Diligent::float3(0, -1, 0), Diligent::float3(0, -1, 0), Diligent::float3(0, -1, 0), // Front
+            Diligent::float3(+1, 0, 0), Diligent::float3(+1, 0, 0), Diligent::float3(+1, 0, 0), Diligent::float3(+1, 0, 0), // Right
+            Diligent::float3(0, +1, 0), Diligent::float3(0, +1, 0), Diligent::float3(0, +1, 0), Diligent::float3(0, +1, 0), // Back
+            Diligent::float3(-1, 0, 0), Diligent::float3(-1, 0, 0), Diligent::float3(-1, 0, 0), Diligent::float3(-1, 0, 0), // Left
+            Diligent::float3(0, 0, +1), Diligent::float3(0, 0, +1), Diligent::float3(0, 0, +1), Diligent::float3(0, 0, +1)  // Top
         };
 
         const std::vector<Diligent::float2> CUBE_TEXTCOORDS = {
-            Diligent::float2{0, 1}, Diligent::float2{0, 0}, Diligent::float2{1, 0}, Diligent::float2{1, 1}, // Bottom
-            Diligent::float2{0, 1}, Diligent::float2{0, 0}, Diligent::float2{1, 0}, Diligent::float2{1, 1}, // Front
-            Diligent::float2{0, 1}, Diligent::float2{1, 1}, Diligent::float2{1, 0}, Diligent::float2{0, 0}, // Right
-            Diligent::float2{0, 1}, Diligent::float2{0, 0}, Diligent::float2{1, 0}, Diligent::float2{1, 1}, // Back
-            Diligent::float2{1, 0}, Diligent::float2{0, 0}, Diligent::float2{0, 1}, Diligent::float2{1, 1}, // Left
-            Diligent::float2{1, 1}, Diligent::float2{0, 1}, Diligent::float2{0, 0}, Diligent::float2{1, 0}  // Top
+            Diligent::float2(0, 1), Diligent::float2(0, 0), Diligent::float2(1, 0), Diligent::float2(1, 1), // Bottom
+            Diligent::float2(0, 1), Diligent::float2(0, 0), Diligent::float2(1, 0), Diligent::float2(1, 1), // Front
+            Diligent::float2(0, 1), Diligent::float2(1, 1), Diligent::float2(1, 0), Diligent::float2(0, 0), // Right
+            Diligent::float2(0, 1), Diligent::float2(0, 0), Diligent::float2(1, 0), Diligent::float2(1, 1), // Back
+            Diligent::float2(1, 0), Diligent::float2(0, 0), Diligent::float2(0, 1), Diligent::float2(1, 1), // Left
+            Diligent::float2(1, 1), Diligent::float2(0, 1), Diligent::float2(0, 0), Diligent::float2(1, 0)  // Top
         };
 
         const std::vector<Diligent::Uint32> CUBE_INDICES =

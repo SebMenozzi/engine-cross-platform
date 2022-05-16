@@ -4,7 +4,8 @@ namespace engine
 {
     // MARK: - Public
 
-    GraphicsEngine::GraphicsEngine():
+    GraphicsEngine::GraphicsEngine(std::shared_ptr<camera::Camera> camera):
+        camera_(camera),
         last_time_(timer_.GetElapsedTime())
     {}
 
@@ -80,27 +81,21 @@ namespace engine
         context_->TransitionResourceStates(static_cast<Diligent::Uint32>(barriers.size()), barriers.data());
     }
 
-    //static double max_framerate = 120.0;
+    static double max_framerate = 120.0;
 
     void GraphicsEngine::update()
     {
-        /*
         double current_time = timer_.GetElapsedTime();
-        double diff = current_time - last_time_;
+        double dt = current_time - last_time_;
 
-        if (diff >= 1.0 / max_framerate)
+        if (dt >= 1.0 / max_framerate)
         {
             last_time_ = current_time;
 
-            update_();
+            update_(dt);
             render_();
             present_();
         }
-        */
-
-        update_();
-        render_();
-        present_();
     }
 
     void GraphicsEngine::stop()
@@ -113,15 +108,21 @@ namespace engine
         swap_chain_->Resize(width, height);
     }
 
+    void GraphicsEngine::set_fov(double fov)
+    {
+        fov_ = fov;
+    }
+
     // MARK: - Private
 
-    void GraphicsEngine::update_()
+    void GraphicsEngine::update_(double dt)
     {
-        // Camera is at (0, 0, -5) looking along the Z axis
-        Diligent::float4x4 view = Diligent::float4x4::Translation(0.0f, 0.0f, 5.0f);
+        camera_->update(dt);
+
+        Diligent::float4x4 view = camera_->look_at();
 
         // Get projection matrix adjusted to the current screen orientation
-        auto projection = get_adjusted_projection_matrix_(45.0f, 0.1f, 100.f);
+        auto projection = get_adjusted_projection_matrix_(fov_, 0.1f, 100.f);
 
         // Compute world-view-projection matrix
         world_view_projection_matrix_ = view * projection;
@@ -208,15 +209,13 @@ namespace engine
         const auto& swap_chain_desc = swap_chain_->GetDesc();
 
         float aspect_ratio = static_cast<float>(swap_chain_desc.Width) / static_cast<float>(swap_chain_desc.Height);
-        float y_scale = 1.f / std::tan(fov / 2.f);
-        float x_scale = y_scale / aspect_ratio;
 
-        Diligent::float4x4 projection;
-        projection._11 = x_scale;
-        projection._22 = y_scale;
-        projection.SetNearFarClipPlanes(near, far, device_->GetDeviceInfo().IsGLDevice());
-
-        return projection;
+        return Diligent::float4x4::Projection(
+            utils::degrees_to_radians(fov),
+            aspect_ratio, 
+            near, far, 
+            device_->GetDeviceInfo().IsGLDevice()
+        );
     }
 
     bool GraphicsEngine::create_device_and_swap_chain_metal_(const Diligent::NativeWindow* window)

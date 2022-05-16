@@ -2,12 +2,12 @@
 
 #include <vector>
 
-#include "RenderDevice.h"
-#include "TextureUtilities.h"
-#include "Buffer.h"
-#include "RefCntAutoPtr.hpp"
-#include "BasicMath.hpp"
-#include "GraphicsTypesX.hpp"
+#include <RenderDevice.h>
+#include <TextureUtilities.h>
+#include <Buffer.h>
+#include <RefCntAutoPtr.hpp>
+#include <BasicMath.hpp>
+#include <GraphicsTypesX.hpp>
 
 namespace engine
 {

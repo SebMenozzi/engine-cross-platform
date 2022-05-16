@@ -68,7 +68,7 @@ namespace engine
 
             // Create a vertex buffer that stores cube vertices
             Diligent::BufferDesc vertex_buffer_desc;
-            vertex_buffer_desc.Name = "Cube vertex buffer";
+            vertex_buffer_desc.Name = "Vertex buffer";
             vertex_buffer_desc.Usage = Diligent::USAGE_IMMUTABLE;
             vertex_buffer_desc.BindFlags = bind_flags;
             vertex_buffer_desc.Size = static_cast<Diligent::Uint64>(data.size() * sizeof(float));

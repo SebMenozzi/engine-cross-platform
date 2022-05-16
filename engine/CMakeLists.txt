@@ -21,10 +21,12 @@ target_sources(engine PRIVATE ${SOURCE})
 target_include_directories(engine PRIVATE
     ${CMAKE_CURRENT_LIST_DIR}/src
     ${CMAKE_CURRENT_LIST_DIR}/src/object
+    ${CMAKE_CURRENT_LIST_DIR}/src/camera
     ${CMAKE_CURRENT_LIST_DIR}/src/utils
 )
 
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/src/object)
+add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/src/camera)
 
 # --------------
 
