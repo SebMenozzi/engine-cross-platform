@@ -13,6 +13,19 @@ namespace engine
 {
     namespace object
     {
+        struct VERTEX_DATA
+        {
+            std::vector<Diligent::float3> positions = {};
+            std::vector<Diligent::float3> normals = {};
+            std::vector<Diligent::float2> texcoords = {};
+        };
+
+        struct OBJECT_DATA
+        {
+            VERTEX_DATA vertex_data = {};
+            std::vector<Diligent::Uint32> indices = {};
+        };
+
         enum VERTEX_COMPONENT_FLAGS : Diligent::Uint32
         {
             VERTEX_COMPONENT_FLAG_NONE = 0x00,
@@ -53,13 +66,6 @@ namespace engine
             
             const Diligent::ImmutableSamplerDesc* immutable_samplers = nullptr;
             Diligent::Uint32 nb_immutable_samplers = 0;
-        };
-
-        struct VERTEX_DATA
-        {
-            std::vector<Diligent::float3> positions = {};
-            std::vector<Diligent::float3> normals = {};
-            std::vector<Diligent::float2> texcoords = {};
         };
 
         Diligent::RefCntAutoPtr<Diligent::IBuffer> create_vertex_buffer(

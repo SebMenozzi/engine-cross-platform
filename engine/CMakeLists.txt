@@ -4,7 +4,6 @@ add_executable(engine)
 
 set(SOURCE
     ${CMAKE_CURRENT_LIST_DIR}/src/main.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/src/graphics_engine.cpp
 )
 
 set(SHADERS
@@ -21,12 +20,19 @@ target_sources(engine PRIVATE ${SOURCE})
 target_include_directories(engine PRIVATE
     ${CMAKE_CURRENT_LIST_DIR}/src
     ${CMAKE_CURRENT_LIST_DIR}/src/object
-    ${CMAKE_CURRENT_LIST_DIR}/src/camera
+    ${CMAKE_CURRENT_LIST_DIR}/src/ecs
     ${CMAKE_CURRENT_LIST_DIR}/src/utils
+    ${CMAKE_CURRENT_LIST_DIR}/src/component
+    ${CMAKE_CURRENT_LIST_DIR}/src/system
+    ${CMAKE_CURRENT_LIST_DIR}/src/window
+    ${CMAKE_CURRENT_LIST_DIR}/src/graphics
+    ${CMAKE_CURRENT_LIST_DIR}/src/event
 )
 
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/src/object)
-add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/src/camera)
+add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/src/system)
+add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/src/window)
+add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/src/graphics)
 
 # --------------
 
