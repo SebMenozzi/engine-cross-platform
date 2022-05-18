@@ -3,11 +3,15 @@
 
 #include "ecs/ecs_types.hpp"
 #include "graphics_manager.hpp"
+#include "gravity.hpp"
+#include "rigid_body.hpp"
 #include "window_manager.hpp"
 #include "utils_maths.hpp"
 #include "coordinator.hpp"
 #include "event_types.hpp"
+
 #include "camera_control_system.hpp"
+#include "physics_system.hpp"
 
 engine::Coordinator coordinator;
 engine::window::WindowManager window_manager;
@@ -46,16 +50,28 @@ int main(int argc, char *argv[])
 
     coordinator.register_component<engine::component::Transform>();
 	coordinator.register_component<engine::component::Camera>();
+    coordinator.register_component<engine::component::RigidBody>();
+    coordinator.register_component<engine::component::Gravity>();
 
     /// Systems
+
+    auto physics_system = coordinator.register_system<engine::system::PhysicsSystem>();
+	{
+		engine::ecs::ECSMask mask;
+        mask.set(coordinator.get_component_type<engine::component::Transform>());
+		mask.set(coordinator.get_component_type<engine::component::Gravity>());
+		mask.set(coordinator.get_component_type<engine::component::RigidBody>());
+		coordinator.set_system_mask<engine::system::PhysicsSystem>(mask);
+	}
 
     auto camera_control_system = coordinator.register_system<engine::system::CameraControlSystem>();
 	{
 		engine::ecs::ECSMask mask;
+        mask.set(coordinator.get_component_type<engine::component::Transform>());
 		mask.set(coordinator.get_component_type<engine::component::Camera>());
-		mask.set(coordinator.get_component_type<engine::component::Transform>());
 		coordinator.set_system_mask<engine::system::CameraControlSystem>(mask);
 	}
+    
 	camera_control_system->init();
 
     auto timer = Diligent::Timer();
@@ -70,6 +86,7 @@ int main(int argc, char *argv[])
 
         window_manager.process_events();
         camera_control_system->update(dt);
+        physics_system->update(dt);
 
         if (dt >= 1.0 / max_framerate)
         {

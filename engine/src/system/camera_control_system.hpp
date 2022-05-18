@@ -1,13 +1,18 @@
 #pragma once
 
-#include "transform.hpp"
-#include "camera.hpp"
 #include "coordinator.hpp"
 #include "ecs_system.hpp"
-#include "event_types.hpp"
+
 #include "event.hpp"
-#include "utils_types.hpp"
+#include "event_types.hpp"
+
 #include "utils_maths.hpp"
+#include "utils_types.hpp"
+
+#include "transform.hpp"
+#include "camera.hpp"
+#include "gravity.hpp"
+#include "rigid_body.hpp"
 
 namespace engine
 {

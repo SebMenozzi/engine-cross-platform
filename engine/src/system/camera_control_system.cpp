@@ -1,6 +1,4 @@
 #include "camera_control_system.hpp"
-#include "event_types.hpp"
-#include "utils_types.hpp"
 
 extern engine::Coordinator coordinator;
 
@@ -20,7 +18,7 @@ namespace engine
             coordinator.add_component(
                 selected_,
                 component::Transform {
-                    .position = Diligent::float3(0, 0, -5)
+                    .position = Diligent::float3(0, 10, -5)
                 }
             );
 
@@ -29,6 +27,21 @@ namespace engine
                 component::Camera {
                     .yaw = 0,
                     .pitch = 0
+                }
+            );
+
+            coordinator.add_component(
+                selected_,
+                component::Gravity {
+                    .force = Diligent::float3(0, -9.81 / 1000000, 0)
+                }
+            );
+
+            coordinator.add_component(
+                selected_,
+                component::RigidBody {
+                    .velocity = Diligent::float3(0),
+                    .acceleration = Diligent::float3(0)
                 }
             );
 
@@ -118,7 +131,7 @@ namespace engine
                 camera.direction.y = cos(pitch_radian) * cos(yaw_radian);
                 camera.direction.z = cos(pitch_radian) * sin(yaw_radian);
             }
-            else if(up_axis_.y == 1.0)
+            else if (up_axis_.y == 1.0)
             {
                 camera.direction.x = cos(pitch_radian) * sin(yaw_radian);
                 camera.direction.y = sin(pitch_radian);

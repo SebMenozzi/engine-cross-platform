@@ -259,6 +259,7 @@ namespace engine
         void GraphicsManager::present_()
         {
             assert(swap_chain_);
+            
             swap_chain_->Present(vsync_enabled_ ? 1 : 0);
         }
 
