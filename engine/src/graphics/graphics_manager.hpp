@@ -21,12 +21,12 @@
 #include <BasicMath.hpp>
 
 #include "utils_maths.hpp"
+
 #include "object.hpp"
-#include "camera.hpp"
 #include "cube.hpp"
 #include "plane.hpp"
 #include "chunk.hpp"
-#include "uv_sphere.hpp"
+#include "sphere/uv_sphere.hpp"
 
 using Buffer = std::vector<uint8_t>;
 

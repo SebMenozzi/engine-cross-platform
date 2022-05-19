@@ -1,28 +1,28 @@
 #include "camera_control_system.hpp"
 
-extern engine::Coordinator coordinator;
+extern std::shared_ptr<engine::coordinator::Coordinator> coordinator;
 
 namespace engine
 {
     namespace system
     {
-        void CameraControlSystem::init()
+        void CameraControlSystem::init( )
         {
-            coordinator.add_event_listener(EVENT_METHOD_LISTENER(event::INPUT, CameraControlSystem::input_handler_));
-            coordinator.add_event_listener(EVENT_METHOD_LISTENER(event::MOUSE_POSITION, CameraControlSystem::mouse_position_handler_));
+            coordinator->add_event_listener(EVENT_METHOD_LISTENER(event::INPUT, CameraControlSystem::input_handler_));
+            coordinator->add_event_listener(EVENT_METHOD_LISTENER(event::MOUSE_POSITION, CameraControlSystem::mouse_position_handler_));
 
             // Create default camera
 
-            selected_ = coordinator.create_entity();
+            selected_ = coordinator->create_entity();
 
-            coordinator.add_component(
+            coordinator->add_component(
                 selected_,
                 component::Transform {
                     .position = Diligent::float3(0, 10, -5)
                 }
             );
 
-            coordinator.add_component(
+            coordinator->add_component(
                 selected_,
                 component::Camera {
                     .yaw = 0,
@@ -30,20 +30,22 @@ namespace engine
                 }
             );
 
-            coordinator.add_component(
+            /*
+            coordinator->add_component(
                 selected_,
                 component::Gravity {
                     .force = Diligent::float3(0, -9.81 / 1000000, 0)
                 }
             );
 
-            coordinator.add_component(
+            coordinator->add_component(
                 selected_,
                 component::RigidBody {
                     .velocity = Diligent::float3(0),
                     .acceleration = Diligent::float3(0)
                 }
             );
+            */
 
             setup_direction_();
         }
@@ -52,8 +54,9 @@ namespace engine
         {
             orientate_();
 
-            auto& camera = coordinator.get_component<component::Camera>(selected_);
-            auto& transform = coordinator.get_component<component::Transform>(selected_);
+            auto& camera = coordinator->get_component<component::Camera>(selected_);
+            auto& transform = coordinator->get_component<component::Transform>(selected_);
+            // auto& rigid_body = coordinator->get_component<component::RigidBody>(selected_);
 
             double speed_up_scale = (input_.speed_up ? 2.0 : 1.0);
 
@@ -71,12 +74,15 @@ namespace engine
 
             if (input_.up)
                 transform.position.y += move_velocity_ * dt * speed_up_scale;
+
+
+            // rigid_body.velocity += Diligent::float3(0, 9.81 / 100000, 0) * dt;
         }
 
         Diligent::float4x4 CameraControlSystem::look_at()
         {
-            auto& camera = coordinator.get_component<component::Camera>(selected_);
-            auto& transform = coordinator.get_component<component::Transform>(selected_);
+            auto& camera = coordinator->get_component<component::Camera>(selected_);
+            auto& transform = coordinator->get_component<component::Transform>(selected_);
 
             Diligent::float3 z_axis = camera.direction;
             Diligent::float3 x_axis = normalize(cross(up_axis_, z_axis));
@@ -94,7 +100,7 @@ namespace engine
 
         void CameraControlSystem::orientate_()
         {
-            auto& camera = coordinator.get_component<component::Camera>(selected_);
+            auto& camera = coordinator->get_component<component::Camera>(selected_);
 
             if (first_mouse_)
             {
@@ -118,7 +124,7 @@ namespace engine
 
         void CameraControlSystem::setup_direction_()
         {
-            auto& camera = coordinator.get_component<component::Camera>(selected_);
+            auto& camera = coordinator->get_component<component::Camera>(selected_);
 
             camera.pitch = utils::clamp(camera.pitch, -89, 89);
 

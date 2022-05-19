@@ -32,6 +32,4 @@
     #else
         void* make_native_metal_view(void* native_window_handle) { return nullptr; }
     #endif
-#else
-    assert(false);
 #endif

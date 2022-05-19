@@ -1,0 +1,8 @@
+add_subdirectory(component)
+add_subdirectory(coordinator)
+add_subdirectory(ecs)
+add_subdirectory(event)
+add_subdirectory(graphics)
+add_subdirectory(object)
+add_subdirectory(sdk)
+add_subdirectory(utils)

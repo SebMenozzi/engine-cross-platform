@@ -1,10 +1,17 @@
-set(SOURCE
-    ${CMAKE_CURRENT_LIST_DIR}/object.cpp
+set(CMAKE_FOLDER "object")
+set(MODULE object)
+
+engine_library(${MODULE}
+    object.cpp
+    object.hpp
+    chunk.hpp
+    cube.hpp
+    plane.hpp
+    sphere/uv_sphere.cpp
+    sphere/uv_sphere.hpp
 )
 
-target_sources(engine PRIVATE ${SOURCE})
-target_include_directories(engine PRIVATE
-    ${CMAKE_CURRENT_LIST_DIR}/sphere
+engine_link_libraries(${MODULE}
+    utils
+    diligent
 )
-
-add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/sphere)

@@ -1,5 +1,13 @@
-set(SOURCE
-    ${CMAKE_CURRENT_LIST_DIR}/graphics_manager.cpp
+set(CMAKE_FOLDER "graphics")
+set(MODULE graphics)
+
+engine_library(${MODULE}
+    graphics_manager.cpp
+    graphics_manager.hpp
 )
 
-target_sources(engine PRIVATE ${SOURCE})
+engine_link_libraries(${MODULE}
+    object
+    utils
+    diligent
+)

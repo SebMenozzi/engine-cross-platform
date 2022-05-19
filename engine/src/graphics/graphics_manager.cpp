@@ -12,7 +12,7 @@ namespace engine
         void GraphicsManager::initialize(const Diligent::NativeWindow* window)
         {
             // Initialize the swap chain descriptor
-            #if PLATFORM_MACOS
+            #if PLATFORM_MACOS || PLATFORM_IOS
                 // We need at least 3 buffers in Metal to avoid massive
                 // performance degradation in full screen mode.
                 // https://github.com/KhronosGroup/MoltenVK/issues/808
@@ -21,7 +21,7 @@ namespace engine
             swap_chain_desc_.Width = 1;
             swap_chain_desc_.Height = 1;
 
-            #if PLATFORM_MACOS
+            #if PLATFORM_MACOS || PLATFORM_IOS
                 if (!create_device_and_swap_chain_metal_(window))
                     assert(false);
             #else
