@@ -1,6 +1,17 @@
-set(SOURCE
-    ${CMAKE_CURRENT_LIST_DIR}/camera_control_system.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/physics_system.cpp
+set(CMAKE_FOLDER "system")
+set(MODULE system)
+
+engine_library(${MODULE}
+    camera_control_system.cpp
+    camera_control_system.hpp
+    physics_system.cpp
+    physics_system.hpp
 )
 
-target_sources(engine PRIVATE ${SOURCE})
+engine_link_libraries(${MODULE}
+    ecs
+    event
+    utils
+    component
+    coordinator
+)

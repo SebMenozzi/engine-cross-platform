@@ -43,7 +43,9 @@ namespace engine
 
                 Diligent::float3 up_axis_ = Diligent::float3(0, 1, 0);
                 float mouse_sensitivity_ = 0.1;
-                float move_velocity_ = 0.02;
+                float move_velocity_ = 4.0;
+
+                bool gravity_enabled_ = false;
         };
     }
 }

@@ -1,7 +1,5 @@
 #pragma once
 
-#include <iostream>
-
 #include "coordinator.hpp"
 
 #include "transform.hpp"

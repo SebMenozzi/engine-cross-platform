@@ -1,13 +1,15 @@
 #include "camera_control_system.hpp"
 
-extern std::shared_ptr<engine::coordinator::Coordinator> coordinator;
-
 namespace engine
 {
+    extern std::shared_ptr<Coordinator> coordinator;
+
     namespace system
     {
-        void CameraControlSystem::init( )
+        void CameraControlSystem::init()
         {
+            assert(coordinator);
+
             coordinator->add_event_listener(EVENT_METHOD_LISTENER(event::INPUT, CameraControlSystem::input_handler_));
             coordinator->add_event_listener(EVENT_METHOD_LISTENER(event::MOUSE_POSITION, CameraControlSystem::mouse_position_handler_));
 
@@ -18,7 +20,7 @@ namespace engine
             coordinator->add_component(
                 selected_,
                 component::Transform {
-                    .position = Diligent::float3(0, 10, -5)
+                    .position = Diligent::float3(0, 0, -5)
                 }
             );
 
@@ -30,7 +32,6 @@ namespace engine
                 }
             );
 
-            /*
             coordinator->add_component(
                 selected_,
                 component::Gravity {
@@ -45,18 +46,19 @@ namespace engine
                     .acceleration = Diligent::float3(0)
                 }
             );
-            */
 
             setup_direction_();
         }
 
         void CameraControlSystem::update(float dt)
         {
+            assert(coordinator);
+
             orientate_();
 
             auto& camera = coordinator->get_component<component::Camera>(selected_);
             auto& transform = coordinator->get_component<component::Transform>(selected_);
-            // auto& rigid_body = coordinator->get_component<component::RigidBody>(selected_);
+            auto& rigid_body = coordinator->get_component<component::RigidBody>(selected_);
 
             double speed_up_scale = (input_.speed_up ? 2.0 : 1.0);
 
@@ -75,8 +77,13 @@ namespace engine
             if (input_.up)
                 transform.position.y += move_velocity_ * dt * speed_up_scale;
 
+            if (input_.gravity)
+                gravity_enabled_ = !gravity_enabled_;
 
-            // rigid_body.velocity += Diligent::float3(0, 9.81 / 100000, 0) * dt;
+            if (gravity_enabled_)
+                rigid_body.velocity += Diligent::float3(0, 9.81 / 100000, 0) * dt;
+            else
+                rigid_body.velocity = Diligent::float3(0);
         }
 
         Diligent::float4x4 CameraControlSystem::look_at()
@@ -100,6 +107,8 @@ namespace engine
 
         void CameraControlSystem::orientate_()
         {
+            assert(coordinator);
+
             auto& camera = coordinator->get_component<component::Camera>(selected_);
 
             if (first_mouse_)
@@ -124,6 +133,8 @@ namespace engine
 
         void CameraControlSystem::setup_direction_()
         {
+            assert(coordinator);
+
             auto& camera = coordinator->get_component<component::Camera>(selected_);
 
             camera.pitch = utils::clamp(camera.pitch, -89, 89);

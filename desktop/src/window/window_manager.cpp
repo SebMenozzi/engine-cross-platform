@@ -1,7 +1,6 @@
 #include "window_manager.hpp"
-#include "GLFW/glfw3.h"
 
-extern std::shared_ptr<engine::coordinator::Coordinator> coordinator;
+extern std::shared_ptr<engine::Engine> engine_manager;
 
 namespace desktop
 {
@@ -11,11 +10,15 @@ namespace desktop
 
         static void window_close_callback_(GLFWwindow *w)
         {
-            coordinator->send_event(engine::event::QUIT);
+            assert(engine_manager);
+
+            engine_manager->send_event(engine::event::QUIT);
         }
 
         static void key_callback_(GLFWwindow *w, int key, int scancode, int action, int mods)
         {
+            assert(engine_manager);
+
             auto window_manager = static_cast<WindowManager*>(glfwGetWindowUserPointer(w));
 
             switch (key) {
@@ -23,7 +26,7 @@ namespace desktop
                     if (action == GLFW_PRESS)
                     {
                         if (!window_manager->is_fullscreen())
-                            coordinator->send_event(engine::event::QUIT);
+                            engine_manager->send_event(engine::event::QUIT);
                     }
                     break;
                 case GLFW_KEY_C:
@@ -93,23 +96,27 @@ namespace desktop
 
             engine::event::Event input_event(engine::event::INPUT);
             input_event.set_parameter(engine::event::input::PARAMETER, window_manager->input);
-            coordinator->send_event(input_event);
+            engine_manager->send_event(input_event);
         }
 
         static void framebuffer_size_callback_(GLFWwindow *w, int width, int height)
         {
+            assert(engine_manager);
+
             engine::event::Event resize_event(engine::event::RESIZE);
 		    resize_event.set_parameter(engine::event::resize::WIDTH, width);
             resize_event.set_parameter(engine::event::resize::HEIGHT, height);
-            coordinator->send_event(resize_event);
+            engine_manager->send_event(resize_event);
         }
 
         static void mouse_callback_(GLFWwindow *w, double x, double y)
         {
+            assert(engine_manager);
+
             engine::event::Event mouse_position_event(engine::event::MOUSE_POSITION);
             mouse_position_event.set_parameter(engine::event::mouse_position::X, x);
             mouse_position_event.set_parameter(engine::event::mouse_position::Y, y);
-            coordinator->send_event(mouse_position_event);
+            engine_manager->send_event(mouse_position_event);
         }
 
         void scroll_callback_(GLFWwindow* w, double xoffset, double yoffset)
@@ -161,13 +168,15 @@ namespace desktop
 
         void WindowManager::send_default_events()
         {
+            assert(engine_manager);
+            
             int width = 0, height = 0;
             glfwGetFramebufferSize(window_, &width, &height);
 
             engine::event::Event resize_event(engine::event::RESIZE);
 		    resize_event.set_parameter(engine::event::resize::WIDTH, width);
             resize_event.set_parameter(engine::event::resize::HEIGHT, height);
-            coordinator->send_event(resize_event);
+            engine_manager->send_event(resize_event);
 
             double x, y;
             glfwGetCursorPos(window_, &x, &y);
@@ -175,7 +184,7 @@ namespace desktop
             engine::event::Event mouse_position_event(engine::event::MOUSE_POSITION);
             mouse_position_event.set_parameter(engine::event::mouse_position::X, x);
             mouse_position_event.set_parameter(engine::event::mouse_position::Y, y);
-            coordinator->send_event(mouse_position_event);
+            engine_manager->send_event(mouse_position_event);
         }
 
         void WindowManager::process_events()

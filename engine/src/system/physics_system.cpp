@@ -1,13 +1,15 @@
 #include "physics_system.hpp"
 
-extern std::shared_ptr<engine::coordinator::Coordinator> coordinator;
-
 namespace engine
 {
+    extern std::shared_ptr<Coordinator> coordinator;
+
     namespace system
     {
         void PhysicsSystem::update(float dt)
         {
+            assert(coordinator);
+
             for (auto const& entity : entities_)
             {
                 auto& rigid_body = coordinator->get_component<component::RigidBody>(entity);

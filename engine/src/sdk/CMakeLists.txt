@@ -18,14 +18,7 @@ set_target_properties(Engine PROPERTIES
 
 target_link_libraries(Engine
     PUBLIC
-    component
-    coordinator
-    ecs
-    event
-    graphics
-    object
-    utils
-    diligent
+    engine
     "-framework CoreGraphics"
     "-framework CoreLocation"
     "-framework QuartzCore"

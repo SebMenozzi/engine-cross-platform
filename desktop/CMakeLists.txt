@@ -9,6 +9,12 @@ target_include_directories(desktop PRIVATE
     ${CMAKE_CURRENT_LIST_DIR}/src/window
 )
 
+if(PLATFORM_MACOS)
+    # MacOS needs @autoreleasepool wrapped around the frame drawing to prevent
+    # memory leaks.
+    set_source_files_properties(${CMAKE_CURRENT_LIST_DIR}/src/main.cpp COMPILE_FLAGS "-x objective-c++")
+endif()
+
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/src/window)
 
 target_link_libraries(desktop PRIVATE

@@ -13,8 +13,8 @@
 #include <GLFW/glfw3native.h>
 #include <NativeWindow.h>
 
+#include "engine.hpp"
 #include "platform.hpp"
-#include "coordinator.hpp"
 #include "event_types.hpp"
 #include "utils_types.hpp"
 
