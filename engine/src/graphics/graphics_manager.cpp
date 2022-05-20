@@ -95,9 +95,9 @@ namespace engine
 
             // MARK: - Texture
 
-            auto dirt_texture = object::load_texture(device_, "./engine/assets/dirt.jpg");
-            auto wood_texture = object::load_texture(device_, "./engine/assets/wood.jpeg");
-            auto mj_texture = object::load_texture(device_, "./engine/assets/mj.jpg");
+            auto dirt_texture = object::load_texture(device_, "/Users/smenozzi/Snapchat/Dev/engine-cross-platform/engine/assets/dirt.jpg");
+            auto wood_texture = object::load_texture(device_, "/Users/smenozzi/Snapchat/Dev/engine-cross-platform/engine/assets/wood.jpeg");
+            auto mj_texture = object::load_texture(device_, "/Users/smenozzi/Snapchat/Dev/engine-cross-platform/engine/assets/mj.jpg");
 
             chunk_srb_->GetVariableByName(Diligent::SHADER_TYPE_PIXEL, "g_Texture")->Set(dirt_texture->GetDefaultView(Diligent::TEXTURE_VIEW_SHADER_RESOURCE));
             cube_srb_->GetVariableByName(Diligent::SHADER_TYPE_PIXEL, "g_Texture")->Set(dirt_texture->GetDefaultView(Diligent::TEXTURE_VIEW_SHADER_RESOURCE));
@@ -223,8 +223,8 @@ namespace engine
         void GraphicsManager::render_()
         {
             // Bind main back buffer
-            auto* pRTV = swap_chain_->GetCurrentBackBufferRTV();
-            auto* pDSV = swap_chain_->GetDepthBufferDSV();
+            Diligent::ITextureView* pRTV = swap_chain_->GetCurrentBackBufferRTV();
+            Diligent::ITextureView* pDSV = swap_chain_->GetDepthBufferDSV();
             context_->SetRenderTargets(1, &pRTV, pDSV, Diligent::RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
 
             /* ---- */
@@ -251,15 +251,15 @@ namespace engine
             render_plane_();
             //render_cube_();
             render_sphere_();
-
-            // Restore default render target
-            context_->SetRenderTargets(1, &pRTV, pDSV, Diligent::RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
         }
 
         void GraphicsManager::present_()
         {
             assert(swap_chain_);
+            assert(context_);
             
+            context_->Flush();
+            context_->FinishFrame();
             swap_chain_->Present(vsync_enabled_ ? 1 : 0);
         }
 
@@ -331,11 +331,11 @@ namespace engine
 
             object::SHADER_INFO vertex_shader;
             vertex_shader.name = "Chunk vertex shader";
-            vertex_shader.path = "./engine/assets/shaders/chunk/chunk.vsh";
+            vertex_shader.path = "/Users/smenozzi/Snapchat/Dev/engine-cross-platform/engine/assets/shaders/chunk/chunk.vsh";
 
             object::SHADER_INFO pixel_shader;
             pixel_shader.name = "Chunk pixel shader";
-            pixel_shader.path = "./engine/assets/shaders/chunk/chunk.psh";
+            pixel_shader.path = "/Users/smenozzi/Snapchat/Dev/engine-cross-platform/engine/assets/shaders/chunk/chunk.psh";
 
             object::PSO_INFO pso_info;
             pso_info.name = "Chunk PSO";
@@ -394,11 +394,11 @@ namespace engine
 
             object::SHADER_INFO vertex_shader;
             vertex_shader.name = "Cube vertex shader";
-            vertex_shader.path = "./engine/assets/shaders/cube/cube.vsh";
+            vertex_shader.path = "/Users/smenozzi/Snapchat/Dev/engine-cross-platform/engine/assets/shaders/cube/cube.vsh";
 
             object::SHADER_INFO pixel_shader;
             pixel_shader.name = "Cube pixel shader";
-            pixel_shader.path = "./engine/assets/shaders/cube/cube.psh";
+            pixel_shader.path = "/Users/smenozzi/Snapchat/Dev/engine-cross-platform/engine/assets/shaders/cube/cube.psh";
 
             object::PSO_INFO pso_info;
             pso_info.name = "Cube PSO";
@@ -457,11 +457,11 @@ namespace engine
 
             object::SHADER_INFO vertex_shader;
             vertex_shader.name = "Sphere vertex shader";
-            vertex_shader.path = "./engine/assets/shaders/cube/cube.vsh";
+            vertex_shader.path = "/Users/smenozzi/Snapchat/Dev/engine-cross-platform/engine/assets/shaders/cube/cube.vsh";
 
             object::SHADER_INFO pixel_shader;
             pixel_shader.name = "Sphere pixel shader";
-            pixel_shader.path = "./engine/assets/shaders/cube/cube.psh";
+            pixel_shader.path = "/Users/smenozzi/Snapchat/Dev/engine-cross-platform/engine/assets/shaders/cube/cube.psh";
 
             object::PSO_INFO pso_info;
             pso_info.name = "Sphere PSO";
@@ -520,11 +520,11 @@ namespace engine
 
             object::SHADER_INFO vertex_shader;
             vertex_shader.name = "Plane vertex shader";
-            vertex_shader.path = "./engine/assets/shaders/cube/cube.vsh";
+            vertex_shader.path = "/Users/smenozzi/Snapchat/Dev/engine-cross-platform/engine/assets/shaders/cube/cube.vsh";
 
             object::SHADER_INFO pixel_shader;
             pixel_shader.name = "Plane pixel shader";
-            pixel_shader.path = "./engine/assets/shaders/cube/cube.psh";
+            pixel_shader.path = "/Users/smenozzi/Snapchat/Dev/engine-cross-platform/engine/assets/shaders/cube/cube.psh";
 
             object::PSO_INFO pso_info;
             pso_info.name = "Plane PSO";

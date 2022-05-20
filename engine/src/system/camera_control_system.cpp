@@ -35,7 +35,7 @@ namespace engine
             coordinator->add_component(
                 selected_,
                 component::Gravity {
-                    .force = Diligent::float3(0, -9.81 / 1000000, 0)
+                    .force = Diligent::float3(0, -9.81, 0)
                 }
             );
 
@@ -58,7 +58,6 @@ namespace engine
 
             auto& camera = coordinator->get_component<component::Camera>(selected_);
             auto& transform = coordinator->get_component<component::Transform>(selected_);
-            auto& rigid_body = coordinator->get_component<component::RigidBody>(selected_);
 
             double speed_up_scale = (input_.speed_up ? 2.0 : 1.0);
 
@@ -76,14 +75,6 @@ namespace engine
 
             if (input_.up)
                 transform.position.y += move_velocity_ * dt * speed_up_scale;
-
-            if (input_.gravity)
-                gravity_enabled_ = !gravity_enabled_;
-
-            if (gravity_enabled_)
-                rigid_body.velocity += Diligent::float3(0, 9.81 / 100000, 0) * dt;
-            else
-                rigid_body.velocity = Diligent::float3(0);
         }
 
         Diligent::float4x4 CameraControlSystem::look_at()

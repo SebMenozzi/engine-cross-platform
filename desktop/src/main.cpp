@@ -56,7 +56,8 @@ int main(int argc, char *argv[])
         #if PLATFORM_MACOS
         @autoreleasepool {
         #endif
-        engine_manager->update(dt);
+        if (window_manager->should_update())
+            engine_manager->update(dt);
         #if PLATFORM_MACOS
         } // @autoreleasepool END
         #endif

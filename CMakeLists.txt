@@ -2,11 +2,11 @@ cmake_minimum_required(VERSION 3.20)
 
 project(engine)
 
-# Generate XCode schema files
+### Generate XCode schema files
 set(CMAKE_XCODE_GENERATE_SCHEME TRUE)
-# Make malloc write 0xAA to newly allocated memory and 0x55 to deallocated memory
+### Make malloc write 0xAA to newly allocated memory and 0x55 to deallocated memory
 set(CMAKE_XCODE_SCHEME_MALLOC_SCRIBBLE YES)
-# Place guard pages on each side of large (4096 bytes or more) buffers
+### Place guard pages on each side of large (4096 bytes or more) buffers
 set(CMAKE_XCODE_SCHEME_MALLOC_GUARD_EDGES YES)
 
 ### Compiler
@@ -26,9 +26,9 @@ include(engine)
 add_subdirectory(submodules)
 add_subdirectory(engine)
 add_subdirectory(desktop)
-#add_subdirectory(iosapp)
+# add_subdirectory(iosapp)
 
-### Create Diligent library
+### Create the Diligent library
 
 engine_library(diligent)
 
@@ -43,3 +43,10 @@ engine_link_libraries(diligent
     Diligent-TextureLoader
     ${ENGINE_LIBRARIES}
 )
+
+### Adding this to be able to compile for Apple Silicon
+if (PLATFORM_MACOS)
+    set (CMAKE_OSX_DEPLOYMENT_TARGET "10.13" CACHE STRING "Minimum OS X deployment version" FORCE)
+    set (CMAKE_OSX_ARCHITECTURES "x86_64;arm64" CACHE STRING "Architectures" FORCE)
+    set (CMAKE_XCODE_ATTRIBUTE_MACOSX_DEPLOYMENT_TARGET[arch=arm64] "11.0" CACHE STRING "arm 64 minimum deployment target" FORCE)
+endif()

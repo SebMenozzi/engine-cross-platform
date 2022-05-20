@@ -85,9 +85,7 @@ namespace desktop
                 // Gravity
                 case GLFW_KEY_G:
                     if (action == GLFW_PRESS)
-                        window_manager->input.gravity = true;
-                    else if (action == GLFW_RELEASE)
-                        window_manager->input.gravity = false;
+                        window_manager->input.gravity = !window_manager->input.gravity;
                     break;
 
                 default:
@@ -227,6 +225,14 @@ namespace desktop
         bool WindowManager::is_fullscreen()
         {
             return glfwGetWindowMonitor(window_) != nullptr;
+        }
+    
+        bool WindowManager::should_update()
+        {
+            int w, h;
+            glfwGetWindowSize(window_, &w, &h);
+            
+            return w > 0 && h > 0;
         }
     }
 }

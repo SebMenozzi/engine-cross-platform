@@ -11,8 +11,8 @@
 
 #include "transform.hpp"
 #include "camera.hpp"
-#include "gravity.hpp"
 #include "rigid_body.hpp"
+#include "gravity.hpp"
 
 namespace engine
 {
@@ -43,9 +43,7 @@ namespace engine
 
                 Diligent::float3 up_axis_ = Diligent::float3(0, 1, 0);
                 float mouse_sensitivity_ = 0.1;
-                float move_velocity_ = 4.0;
-
-                bool gravity_enabled_ = false;
+                float move_velocity_ = 14.0;
         };
     }
 }

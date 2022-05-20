@@ -70,6 +70,7 @@ namespace engine
         assert(graphics_manager);
     
         camera_control_system->update(dt);
+        physics_system->update(dt);
 
         Diligent::float4x4 view = camera_control_system->look_at();
         graphics_manager->set_camera_view(view);

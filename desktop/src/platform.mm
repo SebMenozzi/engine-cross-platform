@@ -19,6 +19,7 @@
             MTKView* mtkView = [[MTKView alloc] initWithFrame: window.contentView.bounds];
             mtkView.device = MTLCreateSystemDefaultDevice();
             mtkView.translatesAutoresizingMaskIntoConstraints = false;
+            mtkView.wantsLayer = true;
 
             [window.contentView addSubview:mtkView];
 

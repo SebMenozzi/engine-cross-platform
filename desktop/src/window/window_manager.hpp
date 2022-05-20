@@ -37,6 +37,7 @@ namespace desktop
                 void send_input(Input input);
                 bool is_fullscreen();
                 void update_title(std::string const& title);
+                bool should_update();
         
                 bool cursor_disabled = true;
                 Input input;
