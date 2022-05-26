@@ -1,5 +1,3 @@
-find_package(OpenGL REQUIRED)
-
 # Diligent Core
 
 set(DILIGENT_CORE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/DiligentCore)

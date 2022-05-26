@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.20)
 
 project(engine)
 
+option(ENGINE_IOS_APP "Generate an iOS app instead" OFF)
+
 ### Generate XCode schema files
 set(CMAKE_XCODE_GENERATE_SCHEME TRUE)
 ### Make malloc write 0xAA to newly allocated memory and 0x55 to deallocated memory
@@ -13,20 +15,46 @@ set(CMAKE_XCODE_SCHEME_MALLOC_GUARD_EDGES YES)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
-set(CMAKE_CXX_FLAGS "-Wno-deprecated-declarations -Wno-missing-field-initializers -Wno-unused-function -Wno-unused-parameter -Wno-switch")
+set(CMAKE_CXX_FLAGS "-Wno-deprecated-declarations -Wno-missing-field-initializers -Wno-unused-function -Wno-unused-parameter -Wno-switch -Wno-unused-const-variable -Wno-c++11-narrowing")
 
 ### Set path to find cmake files
 set(CMAKE_MODULE_PATH
     "${CMAKE_CURRENT_SOURCE_DIR}/cmake/"
     ${CMAKE_MODULE_PATH}
 )
-### Include cmake/engine.cmake
+### Include cmake/*.cmake
 include(engine)
 
 add_subdirectory(submodules)
 add_subdirectory(engine)
-add_subdirectory(desktop)
-# add_subdirectory(iosapp)
+
+if (CMAKE_IOS_APP)
+    # Set to your project name, e.g. project.xcodeproj
+    set(DEVELOPMENT_PROJECT_NAME "iosapp")           
+    # Set to your team ID from Apple
+    set(DEVELOPMENT_TEAM_ID "2TE7AHNP9P")
+    # Set To your app's name
+    set(APP_NAME "iosapp")
+    # Set to your app's bundle identifier
+    set(APP_BUNDLE_IDENTIFIER "com.seb.iosapp")
+    # Set to your preferred code sign identity, to see list:
+    # => /usr/bin/env xcrun security find-identity -v -p codesigning
+    set(CODE_SIGN_IDENTITY "Apple Development: Sebastien Menozzi \(9YZMF75WKE\)") 
+    # Set to Manual or Automatic signing
+    set(CODE_SIGN_STYLE "Automatic")
+    # Set your deployment target version of iOS                 
+    set(DEPLOYMENT_TARGET 15.4)
+    #  Set to "1" to target iPhone, set to "2" to target iPad, set to "1,2" to target both
+    set(DEVICE_FAMILY "1")
+
+    set(FRAMEWORK_NAME "Engine")
+    set(FRAMEWORK_BUNDLE_IDENTIFIER "co.seb.engine") 
+
+    add_subdirectory(framework)
+    add_subdirectory(iosapp)
+else()
+    add_subdirectory(desktop)
+endif()
 
 ### Create the Diligent library
 
@@ -43,10 +71,3 @@ engine_link_libraries(diligent
     Diligent-TextureLoader
     ${ENGINE_LIBRARIES}
 )
-
-### Adding this to be able to compile for Apple Silicon
-if (PLATFORM_MACOS)
-    set (CMAKE_OSX_DEPLOYMENT_TARGET "10.13" CACHE STRING "Minimum OS X deployment version" FORCE)
-    set (CMAKE_OSX_ARCHITECTURES "x86_64;arm64" CACHE STRING "Architectures" FORCE)
-    set (CMAKE_XCODE_ATTRIBUTE_MACOSX_DEPLOYMENT_TARGET[arch=arm64] "11.0" CACHE STRING "arm 64 minimum deployment target" FORCE)
-endif()

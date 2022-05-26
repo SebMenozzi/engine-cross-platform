@@ -1,29 +1,17 @@
-import Cocoa
-import MetalKit
+import UIKit
 
-class AppDelegate: NSObject, NSApplicationDelegate {
+@UIApplicationMain
+class AppDelegate: UIResponder, UIApplicationDelegate {
+    
+    var window: UIWindow?
 
-    private var window: NSWindow!
+    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+        // Create the window (bypass the storyboard)
+        window = UIWindow(frame: UIScreen.main.bounds)
+        // Make this window visible
+        window?.makeKeyAndVisible()
+        window?.rootViewController = ViewController()
 
-    private let wrapper = Wrapper()
-
-    func applicationDidFinishLaunching(_ aNotification: Notification) {
-        let rect = NSRect(x: 0, y: 0, width: 1280, height: 720)
-
-        window = NSWindow(
-            contentRect: rect,
-            styleMask: [.miniaturizable, .closable, .resizable, .titled],
-            backing: .buffered, defer: false
-        )
-        window.center()
-        window.title = "Engine"
-        window.makeKeyAndOrderFront(nil)
-
-        let view = MTKView(frame: rect)
-        window.contentView = view
-
-        wrapper.createApplication()
-        wrapper.initialize(view)
-        wrapper.start()
+        return true
     }
 }
