@@ -24,14 +24,17 @@ namespace engine
         graphics_manager->resize(width, height);
     }
 
-    void Engine::init(Diligent::NativeWindow native_window)
+    void Engine::init(
+        Diligent::NativeWindow native_window,
+        const std::string& assets_path
+    )
     {
         coordinator = std::make_unique<Coordinator>();
         coordinator->init();
         coordinator->add_event_listener(EVENT_FUNCTION_LISTENER(event::QUIT, quit_handler));
         coordinator->add_event_listener(EVENT_FUNCTION_LISTENER(event::RESIZE, resize_handler));
 
-        graphics_manager = std::make_unique<graphics::GraphicsManager>();
+        graphics_manager = std::make_unique<graphics::GraphicsManager>(assets_path);
         graphics_manager->initialize(&native_window);
 
         /// Register components

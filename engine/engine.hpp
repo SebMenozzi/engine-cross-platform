@@ -19,7 +19,10 @@ namespace engine
     class Engine
     {
         public:
-            void init(Diligent::NativeWindow native_window);
+            void init(
+                Diligent::NativeWindow native_window,
+                const std::string& assets_path
+            );
             void update(double dt);
             void shutdown();
             bool should_quit();

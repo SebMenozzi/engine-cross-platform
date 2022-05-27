@@ -1,26 +1,17 @@
-.PHONY: xcode xcode-ios desktop clean
+.PHONY: xcode xcode-ios debug clean
 
 xcode:
-	make clean;
-	cmake -S . -B build -G Xcode -D CMAKE_IOS_APP=OFF
+	cmake -S . -B build -G Xcode
 	open build/engine.xcodeproj
 
 xcode-ios:
-	make clean;
-	cmake -S . -B build -G Xcode -D CMAKE_TOOLCHAIN_FILE=../cmake/ios.cmake -D IOS_PLATFORM=OS -D CMAKE_IOS_APP=ON
+	cmake -S . -B build -G Xcode -D CMAKE_TOOLCHAIN_FILE=../cmake/ios.cmake -D IOS_PLATFORM=OS
 	open build/engine.xcodeproj
 
 debug:
-	make clean;
-	mkdir -p build
-	cd build; cmake -DCMAKE_BUILD_TYPE=DEBUG ..
+	cmake -S . -B build -D CMAKE_BUILD_TYPE=DEBUG
 	cd build; make -j8
-
-desktop:
 	./build/desktop/desktop
-
-iosapp:
-	open ./app/iOS/iosapp.xcodeproj
 
 clean:
 	rm -rf build

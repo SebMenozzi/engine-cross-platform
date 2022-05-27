@@ -33,4 +33,15 @@
     #else
         void* make_native_metal_view(void* native_window_handle) { return nullptr; }
     #endif
+
+    const std::string& get_resource_path()
+    {
+        NSString* path = [[NSBundle mainBundle] resourcePath];
+
+        std::string* str = new std::string([path UTF8String]);
+        
+        return *str;
+    }
+#else
+    std::string* get_resource_path() { return nullptr; }
 #endif

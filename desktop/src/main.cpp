@@ -1,6 +1,7 @@
 #include <iostream>
 
 #include "engine.hpp"
+#include "platform.hpp"
 #include "window_manager.hpp"
 
 #include "utils_maths.hpp"
@@ -17,7 +18,8 @@ int main(int argc, char *argv[])
     auto native_window = window_manager->get_native_window();
 
     engine_manager = std::make_unique<engine::Engine>();
-    engine_manager->init(native_window);
+
+    engine_manager->init(native_window, get_resource_path());
 
     window_manager->send_default_events();
 

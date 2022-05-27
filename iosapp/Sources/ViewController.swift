@@ -16,7 +16,7 @@ final class ViewController: UIViewController {
         metalView.frame = view.frame
         
         engine.create()
-        engine.initialize(metalView)
+        engine.initializeViewAndAssetsPath(metalView, path: Bundle.main.resourcePath)
         engine.update(0)
     }
 }

@@ -10,11 +10,14 @@
     self.engine_ = new engine::Engine();
 }
 
-- (void)initialize:(MTKView*) view {
+- (void)initializeViewAndAssetsPath:(MTKView*) view
+                               path:(NSString*) path {
     Diligent::NativeWindow native_window;
     native_window.pCALayer = (__bridge void*) view.layer;
+
+    const std::string& str = std::string([path UTF8String]);
     
-    self.engine_->init(native_window);
+    self.engine_->init(native_window, str);
 }
 
 - (void)update:(double) dt {

@@ -1,5 +1,6 @@
 #ifdef __cplusplus
 #include <engine/engine.hpp>
+#include <string.h>
 #endif
 
 #include <MetalKit/MetalKit.h>
@@ -13,7 +14,8 @@
 // MARK: - Public
 
 - (void)create;
-- (void)initialize:(MTKView*) view;
+- (void)initializeViewAndAssetsPath:(MTKView*) view 
+                               path:(NSString*) path;
 - (void)update:(double) dt;
 - (void)shutdown;
 

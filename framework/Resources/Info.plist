@@ -5,11 +5,11 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>English</string>
 	<key>CFBundleExecutable</key>
-	<string>${MACOSX_FRAMEWORK_NAME}</string>
+	<string>${FRAMEWORK_NAME}</string>
 	<key>CFBundleIconFile</key>
 	<string>${MACOSX_FRAMEWORK_ICON_FILE}</string>
 	<key>CFBundleIdentifier</key>
-	<string>${MACOSX_FRAMEWORK_IDENTIFIER}</string>
+	<string>${FRAMEWORK_BUNDLE_IDENTIFIER}</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundlePackageType</key>

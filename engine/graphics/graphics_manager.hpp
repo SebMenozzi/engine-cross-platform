@@ -1,11 +1,11 @@
 #pragma once
 
 #include <vector>
-#include <string>
 #include <memory>
 #include <optional>
 #include <fstream>
 #include <iostream>
+#include <cstring>
 
 #include <Errors.hpp>
 #if METAL_SUPPORTED
@@ -38,7 +38,7 @@ namespace engine
         class GraphicsManager
         {
             public:
-                GraphicsManager();
+                GraphicsManager(const std::string& path);
 
                 void initialize(const Diligent::NativeWindow* window);
                 void update(double dt);
@@ -65,6 +65,9 @@ namespace engine
                 void render_cube_();
                 void render_sphere_();
                 void render_plane_();
+                
+                // TODO: dirty fix
+                std::string assets_path_;
 
                 /// MARK: - Rendering
                 Diligent::IRenderDevice* device_ = nullptr;

@@ -1,4 +1,5 @@
 #include "graphics_manager.hpp"
+#include <cassert>
 
 namespace engine
 {
@@ -6,7 +7,8 @@ namespace engine
     {
         /// MARK: - Public methods
 
-        GraphicsManager::GraphicsManager()
+        GraphicsManager::GraphicsManager(const std::string& path)
+            : assets_path_(path)
         {}
 
         void GraphicsManager::initialize(const Diligent::NativeWindow* window)
@@ -36,30 +38,6 @@ namespace engine
 
             Diligent::CreateUniformBuffer(device_, sizeof(Diligent::float4x4), "Vertex shader constants", &vertices_constants_);
             barriers.emplace_back(vertices_constants_, Diligent::RESOURCE_STATE_UNKNOWN, Diligent::RESOURCE_STATE_CONSTANT_BUFFER, Diligent::STATE_TRANSITION_FLAG_UPDATE_STATE);
-
-            // MARK: - Chunk
-
-            create_chunk_pso_();
-
-            object::VERTEX_DATA chunk_vertex_data = object::generate_random_chunk();
-
-            chunk_vertex_buffer_ = object::create_vertex_buffer(device_, chunk_vertex_data, object::VERTEX_COMPONENT_FLAG_POSITION_TEXCOORD);
-            barriers.emplace_back(chunk_vertex_buffer_, Diligent::RESOURCE_STATE_UNKNOWN, Diligent::RESOURCE_STATE_VERTEX_BUFFER, Diligent::STATE_TRANSITION_FLAG_UPDATE_STATE);
-
-            // MARK: - Cube
-
-            create_cube_pso_();
-
-            object::VERTEX_DATA cube_vertex_data;
-            cube_vertex_data.positions = object::CUBE_POSITIONS;
-            cube_vertex_data.normals = object::CUBE_NORMALS;
-            cube_vertex_data.texcoords = object::CUBE_TEXTCOORDS;
-
-            cube_vertex_buffer_ = object::create_vertex_buffer(device_, cube_vertex_data, object::VERTEX_COMPONENT_FLAG_POSITION_NORMAL_TEXCOORD);
-            barriers.emplace_back(cube_vertex_buffer_, Diligent::RESOURCE_STATE_UNKNOWN, Diligent::RESOURCE_STATE_VERTEX_BUFFER, Diligent::STATE_TRANSITION_FLAG_UPDATE_STATE);
-
-            cube_index_buffer_ = object::create_index_buffer(device_, object::CUBE_INDICES);
-            barriers.emplace_back(cube_index_buffer_, Diligent::RESOURCE_STATE_UNKNOWN, Diligent::RESOURCE_STATE_INDEX_BUFFER, Diligent::STATE_TRANSITION_FLAG_UPDATE_STATE);
 
             // MARK: - Sphere
 
@@ -95,16 +73,13 @@ namespace engine
 
             // MARK: - Texture
 
-            auto dirt_texture = object::load_texture(device_, "/Users/smenozzi/Snapchat/Dev/engine-cross-platform/assets/dirt.jpg");
-            auto wood_texture = object::load_texture(device_, "/Users/smenozzi/Snapchat/Dev/engine-cross-platform/assets/wood.jpeg");
-            auto mj_texture = object::load_texture(device_, "/Users/smenozzi/Snapchat/Dev/engine-cross-platform/assets/mj.jpg");
+            auto wood_texture = object::load_texture(device_, assets_path_ + "/wood.jpeg");
+            auto mj_texture = object::load_texture(device_, assets_path_ + "/mj.jpg");
 
-            chunk_srb_->GetVariableByName(Diligent::SHADER_TYPE_PIXEL, "g_Texture")->Set(dirt_texture->GetDefaultView(Diligent::TEXTURE_VIEW_SHADER_RESOURCE));
-            cube_srb_->GetVariableByName(Diligent::SHADER_TYPE_PIXEL, "g_Texture")->Set(dirt_texture->GetDefaultView(Diligent::TEXTURE_VIEW_SHADER_RESOURCE));
             sphere_srb_->GetVariableByName(Diligent::SHADER_TYPE_PIXEL, "g_Texture")->Set(mj_texture->GetDefaultView(Diligent::TEXTURE_VIEW_SHADER_RESOURCE));
             plane_srb_->GetVariableByName(Diligent::SHADER_TYPE_PIXEL, "g_Texture")->Set(wood_texture->GetDefaultView(Diligent::TEXTURE_VIEW_SHADER_RESOURCE));
 
-            barriers.emplace_back(dirt_texture, Diligent::RESOURCE_STATE_UNKNOWN, Diligent::RESOURCE_STATE_SHADER_RESOURCE, Diligent::STATE_TRANSITION_FLAG_UPDATE_STATE);
+            barriers.emplace_back(mj_texture, Diligent::RESOURCE_STATE_UNKNOWN, Diligent::RESOURCE_STATE_SHADER_RESOURCE, Diligent::STATE_TRANSITION_FLAG_UPDATE_STATE);
             barriers.emplace_back(wood_texture, Diligent::RESOURCE_STATE_UNKNOWN, Diligent::RESOURCE_STATE_SHADER_RESOURCE, Diligent::STATE_TRANSITION_FLAG_UPDATE_STATE);
 
             context_->TransitionResourceStates(static_cast<Diligent::Uint32>(barriers.size()), barriers.data());
@@ -148,46 +123,6 @@ namespace engine
 
             // Compute world-view-projection matrix
             world_view_projection_matrix_ = camera_view_ * projection;
-        }
-
-        void GraphicsManager::render_chunk_()
-        {
-            Diligent::IBuffer* buffers[] = { chunk_vertex_buffer_ };
-            context_->SetVertexBuffers(0, 1, buffers, nullptr, Diligent::RESOURCE_STATE_TRANSITION_MODE_TRANSITION, Diligent::SET_VERTEX_BUFFERS_FLAG_RESET);
-
-            /// Set the pipeline state in the immediate context
-            context_->SetPipelineState(chunk_pso_);
-
-            // Commit shader resources. RESOURCE_STATE_TRANSITION_MODE_TRANSITION mode
-            // makes sure that resources are transitioned to required states.
-            context_->CommitShaderResources(chunk_srb_, Diligent::RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
-            
-            const Diligent::Uint32 nb_elements = Diligent::Uint32(chunk_vertex_buffer_->GetDesc().Size);
-            const Diligent::Uint32 element_size = sizeof(Diligent::float3);
-
-            Diligent::DrawAttribs draw_attributes(nb_elements / element_size, Diligent::DRAW_FLAG_VERIFY_ALL);
-            context_->Draw(draw_attributes);
-        }
-
-        void GraphicsManager::render_cube_()
-        {
-            // Bind vertex and index buffers
-            Diligent::IBuffer* buffers[] = { cube_vertex_buffer_ };
-            context_->SetVertexBuffers(0, 1, buffers, nullptr, Diligent::RESOURCE_STATE_TRANSITION_MODE_TRANSITION, Diligent::SET_VERTEX_BUFFERS_FLAG_RESET);
-            context_->SetIndexBuffer(cube_index_buffer_, 0, Diligent::RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
-
-            /// Set the pipeline state in the immediate context
-            context_->SetPipelineState(cube_pso_);
-
-            // Commit shader resources. RESOURCE_STATE_TRANSITION_MODE_TRANSITION mode
-            // makes sure that resources are transitioned to required states.
-            context_->CommitShaderResources(cube_srb_, Diligent::RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
-            
-            const Diligent::Uint32 nb_elements = Diligent::Uint32(cube_index_buffer_->GetDesc().Size);
-            const Diligent::Uint32 element_size = sizeof(Diligent::Uint32);
-
-            Diligent::DrawIndexedAttribs draw_attributes(nb_elements / element_size, Diligent::VT_UINT32, Diligent::DRAW_FLAG_VERIFY_ALL);
-            context_->DrawIndexed(draw_attributes);
         }
 
         void GraphicsManager::render_sphere_()
@@ -259,9 +194,7 @@ namespace engine
 
             /* ---- */
             
-            //render_chunk_();
             render_plane_();
-            //render_cube_();
             render_sphere_();
         }
 
@@ -333,132 +266,6 @@ namespace engine
             device->Release();
         }
 
-        void GraphicsManager::create_chunk_pso_()
-        {
-            auto *engine_factory = Diligent::GetEngineFactoryMtl();
-
-            // Create a shader source stream factory to load shaders from files.
-            Diligent::RefCntAutoPtr<Diligent::IShaderSourceInputStreamFactory> shader_source_factory;
-            engine_factory->CreateDefaultShaderSourceStreamFactory(nullptr, &shader_source_factory);
-
-            object::SHADER_INFO vertex_shader;
-            vertex_shader.name = "Chunk vertex shader";
-            vertex_shader.path = "/Users/smenozzi/Snapchat/Dev/engine-cross-platform/assets/shaders/chunk/chunk.vsh";
-
-            object::SHADER_INFO pixel_shader;
-            pixel_shader.name = "Chunk pixel shader";
-            pixel_shader.path = "/Users/smenozzi/Snapchat/Dev/engine-cross-platform/assets/shaders/chunk/chunk.psh";
-
-            object::PSO_INFO pso_info;
-            pso_info.name = "Chunk PSO";
-            pso_info.rtv_format = swap_chain_->GetDesc().ColorBufferFormat;
-            pso_info.dsv_format = swap_chain_->GetDesc().DepthBufferFormat;
-            pso_info.shader_source_factory = shader_source_factory;
-            pso_info.vertex_shader = vertex_shader;
-            pso_info.pixel_shader = pixel_shader;
-            pso_info.components = object::VERTEX_COMPONENT_FLAG_POSITION_TEXCOORD;
-            pso_info.cull_mode = Diligent::CULL_MODE_BACK;
-            pso_info.depth_enable = true;
-
-            Diligent::ShaderResourceVariableDesc variables[] = 
-            {
-                {Diligent::SHADER_TYPE_PIXEL, "g_Texture", Diligent::SHADER_RESOURCE_VARIABLE_TYPE_MUTABLE}
-            };
-            pso_info.variables = variables;
-            pso_info.nb_variables = _countof(variables);
-
-            Diligent::SamplerDesc sampler_linear_clamp_desc
-            {
-                Diligent::FILTER_TYPE_LINEAR, 
-                Diligent::FILTER_TYPE_LINEAR, 
-                Diligent::FILTER_TYPE_LINEAR, 
-
-                Diligent::TEXTURE_ADDRESS_CLAMP, 
-                Diligent::TEXTURE_ADDRESS_CLAMP, 
-                Diligent::TEXTURE_ADDRESS_CLAMP
-            };
-            Diligent::ImmutableSamplerDesc immutable_samplers[] = 
-            {
-                {Diligent::SHADER_TYPE_PIXEL, "g_Texture", sampler_linear_clamp_desc}
-            };
-            pso_info.immutable_samplers = immutable_samplers;
-            pso_info.nb_immutable_samplers = _countof(immutable_samplers);
-
-            chunk_pso_ = object::create_pipeline_state(device_, pso_info);
-
-            // Since we did not explcitly specify the type for 'Constants' variable, default
-            // type (SHADER_RESOURCE_VARIABLE_TYPE_STATIC) will be used. Static variables never
-            // change and are bound directly through the pipeline state object.
-            chunk_pso_->GetStaticVariableByName(Diligent::SHADER_TYPE_VERTEX, "Constants")->Set(vertices_constants_);
-
-            // Since we are using mutable variable, we must create a shader resource binding object
-            // http://diligentgraphics.com/2016/03/23/resource-binding-model-in-diligent-engine-2-0/
-            chunk_pso_->CreateShaderResourceBinding(&chunk_srb_, true);
-        }
-
-        void GraphicsManager::create_cube_pso_()
-        {
-            auto *engine_factory = Diligent::GetEngineFactoryMtl();
-
-            // Create a shader source stream factory to load shaders from files.
-            Diligent::RefCntAutoPtr<Diligent::IShaderSourceInputStreamFactory> shader_source_factory;
-            engine_factory->CreateDefaultShaderSourceStreamFactory(nullptr, &shader_source_factory);
-
-            object::SHADER_INFO vertex_shader;
-            vertex_shader.name = "Cube vertex shader";
-            vertex_shader.path = "/Users/smenozzi/Snapchat/Dev/engine-cross-platform/assets/shaders/cube/cube.vsh";
-
-            object::SHADER_INFO pixel_shader;
-            pixel_shader.name = "Cube pixel shader";
-            pixel_shader.path = "/Users/smenozzi/Snapchat/Dev/engine-cross-platform/assets/shaders/cube/cube.psh";
-
-            object::PSO_INFO pso_info;
-            pso_info.name = "Cube PSO";
-            pso_info.rtv_format = swap_chain_->GetDesc().ColorBufferFormat;
-            pso_info.dsv_format = swap_chain_->GetDesc().DepthBufferFormat;
-            pso_info.shader_source_factory = shader_source_factory;
-            pso_info.vertex_shader = vertex_shader;
-            pso_info.pixel_shader = pixel_shader;
-            pso_info.components = object::VERTEX_COMPONENT_FLAG_POSITION_NORMAL_TEXCOORD;
-            pso_info.cull_mode = Diligent::CULL_MODE_BACK;
-            pso_info.depth_enable = true;
-        
-            Diligent::ShaderResourceVariableDesc variables[] = 
-            {
-                {Diligent::SHADER_TYPE_PIXEL, "g_Texture", Diligent::SHADER_RESOURCE_VARIABLE_TYPE_MUTABLE}
-            };
-            pso_info.variables = variables;
-            pso_info.nb_variables = _countof(variables);
-
-            Diligent::SamplerDesc sampler_linear_clamp_desc
-            {
-                Diligent::FILTER_TYPE_LINEAR, 
-                Diligent::FILTER_TYPE_LINEAR, 
-                Diligent::FILTER_TYPE_LINEAR, 
-
-                Diligent::TEXTURE_ADDRESS_CLAMP, 
-                Diligent::TEXTURE_ADDRESS_CLAMP, 
-                Diligent::TEXTURE_ADDRESS_CLAMP
-            };
-            Diligent::ImmutableSamplerDesc immutable_samplers[] = 
-            {
-                {Diligent::SHADER_TYPE_PIXEL, "g_Texture", sampler_linear_clamp_desc}
-            };
-            pso_info.immutable_samplers = immutable_samplers;
-            pso_info.nb_immutable_samplers = _countof(immutable_samplers);
-
-            cube_pso_ = object::create_pipeline_state(device_, pso_info);
-
-            // Since we did not explcitly specify the type for 'Constants' variable, default
-            // type (SHADER_RESOURCE_VARIABLE_TYPE_STATIC) will be used. Static variables never
-            // change and are bound directly through the pipeline state object.
-            cube_pso_->GetStaticVariableByName(Diligent::SHADER_TYPE_VERTEX, "Constants")->Set(vertices_constants_);
-
-            // Since we are using mutable variable, we must create a shader resource binding object
-            // http://diligentgraphics.com/2016/03/23/resource-binding-model-in-diligent-engine-2-0/
-            cube_pso_->CreateShaderResourceBinding(&cube_srb_, true);
-        }
-
         void GraphicsManager::create_sphere_pso_()
         {
             auto *engine_factory = Diligent::GetEngineFactoryMtl();
@@ -469,11 +276,11 @@ namespace engine
 
             object::SHADER_INFO vertex_shader;
             vertex_shader.name = "Sphere vertex shader";
-            vertex_shader.path = "/Users/smenozzi/Snapchat/Dev/engine-cross-platform/assets/shaders/cube/cube.vsh";
+            vertex_shader.path = assets_path_ + "/cube.vsh";
 
             object::SHADER_INFO pixel_shader;
             pixel_shader.name = "Sphere pixel shader";
-            pixel_shader.path = "/Users/smenozzi/Snapchat/Dev/engine-cross-platform/assets/shaders/cube/cube.psh";
+            pixel_shader.path = assets_path_ + "/cube.psh";
 
             object::PSO_INFO pso_info;
             pso_info.name = "Sphere PSO";
@@ -532,11 +339,11 @@ namespace engine
 
             object::SHADER_INFO vertex_shader;
             vertex_shader.name = "Plane vertex shader";
-            vertex_shader.path = "/Users/smenozzi/Snapchat/Dev/engine-cross-platform/assets/shaders/cube/cube.vsh";
+            vertex_shader.path = assets_path_ + "/cube.vsh";
 
             object::SHADER_INFO pixel_shader;
             pixel_shader.name = "Plane pixel shader";
-            pixel_shader.path = "/Users/smenozzi/Snapchat/Dev/engine-cross-platform/assets/shaders/cube/cube.psh";
+            pixel_shader.path = assets_path_ + "/cube.psh";
 
             object::PSO_INFO pso_info;
             pso_info.name = "Plane PSO";

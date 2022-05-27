@@ -38,13 +38,13 @@ namespace engine
 
         struct SHADER_INFO
         {
-            const char* name = nullptr;
-            const char* path = nullptr;
+            std::string name;
+            std::string path;
         };
 
         struct PSO_INFO
         {
-            const char* name = nullptr;
+            std::string name;
 
             Diligent::TEXTURE_FORMAT rtv_format = Diligent::TEX_FORMAT_UNKNOWN;
             Diligent::TEXTURE_FORMAT dsv_format = Diligent::TEX_FORMAT_UNKNOWN;
@@ -90,7 +90,7 @@ namespace engine
 
         Diligent::RefCntAutoPtr<Diligent::ITexture> load_texture(
             Diligent::IRenderDevice* device, 
-            const char* texture_path
+            const std::string& texture_path
         );
     }
 }

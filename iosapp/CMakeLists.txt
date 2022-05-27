@@ -30,6 +30,8 @@ set(APP_SOURCE_FILES
 set(RESOURCES
 	${CMAKE_CURRENT_SOURCE_DIR}/Resources/Assets/AppIcon.xcassets
 	${CMAKE_CURRENT_SOURCE_DIR}/Resources/Storyboards/LaunchScreen.storyboard
+	${SHADERS}
+	${TEXTURES}
 )
 
 add_executable(
@@ -127,6 +129,20 @@ add_custom_command(
     \"
 )
 
+# Copy the framework into the app bundle
+add_custom_command(
+    TARGET
+    ${APP_NAME}
+    POST_BUILD COMMAND /bin/sh -c
+    \"
+	echo COPY FRAMEWORK \;
+
+	${CMAKE_COMMAND} -E copy_directory 
+		${PROJECT_BINARY_DIR}/framework/\${CONFIGURATION}\${EFFECTIVE_PLATFORM_NAME}/
+		${PROJECT_BINARY_DIR}/iosapp/\${CONFIGURATION}\${EFFECTIVE_PLATFORM_NAME}/${APP_NAME}.app/Frameworks \;
+    \"
+)
+
 # Codesign the framework in it's new spot
 add_custom_command(
     TARGET
@@ -140,3 +156,7 @@ add_custom_command(
 		--sign ${CODE_SIGN_IDENTITY} \;
 	\"
 )
+
+# To appear in the IDE
+source_group("Shaders" FILES ${SHADERS})
+source_group("Textures" FILES ${TEXTURES})

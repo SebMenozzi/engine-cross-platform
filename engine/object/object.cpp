@@ -7,14 +7,14 @@ namespace engine
     {
         Diligent::RefCntAutoPtr<Diligent::ITexture> load_texture(
             Diligent::IRenderDevice* device, 
-            const char* texture_path
+            const std::string& texture_path
         )
         {
             Diligent::TextureLoadInfo texture_load_info;
             texture_load_info.IsSRGB = true;
 
             Diligent::RefCntAutoPtr<Diligent::ITexture> texture;
-            CreateTextureFromFile(texture_path, texture_load_info, device, &texture);
+            CreateTextureFromFile(texture_path.c_str(), texture_load_info, device, &texture);
 
             return texture;
         }
@@ -127,7 +127,7 @@ namespace engine
             // This is a graphics pipeline
             pipeline_pso_info.PSODesc.PipelineType = Diligent::PIPELINE_TYPE_GRAPHICS;
             // Pipeline state name is used by the engine to report issues.
-            pipeline_pso_info.PSODesc.Name = pso_info.name;
+            pipeline_pso_info.PSODesc.Name = pso_info.name.c_str();
 
             // Set the number of render targets to one
             pipeline_pso_info.GraphicsPipeline.NumRenderTargets = 1;
@@ -157,8 +157,8 @@ namespace engine
             {
                 shader_create_info.Desc.ShaderType = Diligent::SHADER_TYPE_VERTEX;
                 shader_create_info.EntryPoint = "main";
-                shader_create_info.Desc.Name = pso_info.vertex_shader.name;
-                shader_create_info.FilePath = pso_info.vertex_shader.path;
+                shader_create_info.Desc.Name = pso_info.vertex_shader.name.c_str();
+                shader_create_info.FilePath = pso_info.vertex_shader.path.c_str();
 
                 device->CreateShader(shader_create_info, &vertex_shader);
             }
@@ -168,8 +168,8 @@ namespace engine
             {
                 shader_create_info.Desc.ShaderType = Diligent::SHADER_TYPE_PIXEL;
                 shader_create_info.EntryPoint = "main";
-                shader_create_info.Desc.Name = pso_info.pixel_shader.name;
-                shader_create_info.FilePath = pso_info.pixel_shader.path;
+                shader_create_info.Desc.Name = pso_info.pixel_shader.name.c_str();
+                shader_create_info.FilePath = pso_info.pixel_shader.path.c_str();
 
                 device->CreateShader(shader_create_info, &pixel_shader);
             }
