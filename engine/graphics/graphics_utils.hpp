@@ -11,7 +11,7 @@
 
 namespace engine
 {
-    namespace object
+    namespace graphics
     {
         struct VERTEX_DATA
         {

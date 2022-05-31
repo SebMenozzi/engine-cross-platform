@@ -29,13 +29,12 @@ add_subdirectory(engine)
 
 set(SHADERS
     ${PROJECT_SOURCE_DIR}/assets/shaders/structures.fxh
-    ${PROJECT_SOURCE_DIR}/assets/shaders/post_process/post_process.psh
-	${PROJECT_SOURCE_DIR}/assets/shaders/post_process/post_process.vsh
+    ${PROJECT_SOURCE_DIR}/assets/shaders/post_process/invert.psh
+	${PROJECT_SOURCE_DIR}/assets/shaders/post_process/invert.vsh
 	${PROJECT_SOURCE_DIR}/assets/shaders/texture/texture.psh
 	${PROJECT_SOURCE_DIR}/assets/shaders/texture/texture.vsh
 	${PROJECT_SOURCE_DIR}/assets/shaders/plane/plane.psh
 	${PROJECT_SOURCE_DIR}/assets/shaders/plane/plane.vsh
-    ${PROJECT_SOURCE_DIR}/assets/shaders/sun/sun.fx
 )
 
 set(TEXTURES

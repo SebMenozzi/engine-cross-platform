@@ -1,9 +1,9 @@
 
-#include "object.hpp"
+#include "graphics_utils.hpp"
 
 namespace engine
 {
-    namespace object
+    namespace graphics
     {
         Diligent::RefCntAutoPtr<Diligent::ITexture> load_texture(
             Diligent::IRenderDevice* device, 

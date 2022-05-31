@@ -23,7 +23,7 @@
 
 #include "utils_maths.hpp"
 
-#include "object.hpp"
+#include "graphics_utils.hpp"
 #include "cube.hpp"
 #include "plane.hpp"
 #include "sphere/uv_sphere.hpp"
@@ -90,18 +90,15 @@ namespace engine
 
                 void create_sphere_pso_();
                 void create_plane_pso_();
-                void create_sun_pso_();
                 void create_post_process_pso_();
 
                 void render_sphere_();
                 void render_plane_();
-                void render_sun_();
                 void render_post_process_();
 
                 /// Sky
                 void create_ambient_sky_light_texture_();
                 
-                // TODO: dirty fix
                 std::string assets_path_;
 
                 /// MARK: - Rendering
@@ -109,7 +106,7 @@ namespace engine
                 Diligent::IDeviceContext* context_ = nullptr;
                 Diligent::ISwapChain* swap_chain_ = nullptr;
                 Diligent::SwapChainDesc swap_chain_desc_;
-
+                GBuffer g_buffer_;
                 bool vsync_enabled_ = false;
 
                 /// MARK: - Chunk
@@ -142,27 +139,16 @@ namespace engine
                 Diligent::RefCntAutoPtr<Diligent::IBuffer> plane_index_buffer_;
 
                 Diligent::RefCntAutoPtr<Diligent::IBuffer> global_constants_;
-                Diligent::float4x4 world_view_projection_;
+                Diligent::float4x4 camera_view_projection_;
 
                 /// MARK: - Camera
                 Diligent::float4x4 camera_view_;
-                //std::shared_ptr<camera::Camera> camera_;
                 double fov_ = 60.0;
-
-                /// Sun
-                Diligent::RefCntAutoPtr<Diligent::IPipelineState> sun_pso_;
-                Diligent::RefCntAutoPtr<Diligent::IShaderResourceBinding> sun_srb_;
-
-                /// Sky
-                static const int ambient_sky_light_dimension_ = 1024;
-                Diligent::RefCntAutoPtr<Diligent::ITextureView> ambient_sky_light_srv_; // 1024 x 1 RGBA16F
-                Diligent::RefCntAutoPtr<Diligent::ITextureView> ambient_sky_light_rtv_;
 
                 /// Post Process
                 Diligent::RefCntAutoPtr<Diligent::IPipelineState> post_process_pso_;
                 Diligent::RefCntAutoPtr<Diligent::IShaderResourceBinding> post_process_srb_;
-            
-                GBuffer g_buffer_;
+
         };
     }
 }

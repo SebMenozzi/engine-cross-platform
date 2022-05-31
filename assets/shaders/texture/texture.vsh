@@ -29,6 +29,6 @@ void main(
     out VSOutput VsOut
 ) 
 {
-    VsOut.Pos = mul(float4(VSIn.Pos, 1.0), g_Constants.WorldViewProj);
+    VsOut.Pos = mul(float4(VSIn.Pos, 1.0), g_Constants.CameraViewProjection);
     VsOut.UV = VSIn.UV;
 }

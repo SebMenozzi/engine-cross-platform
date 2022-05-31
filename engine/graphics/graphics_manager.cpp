@@ -54,39 +54,36 @@ namespace engine
 
             auto sphere = object::sphere::UVSphere(1.0, 100.0, 100.0);
 
-            object::VERTEX_DATA sphere_vertex_data;
+            VERTEX_DATA sphere_vertex_data;
             sphere_vertex_data.positions = sphere.vertices_;
             sphere_vertex_data.normals = sphere.normals_;
             sphere_vertex_data.texcoords = sphere.textcoords_;
 
-            sphere_vertex_buffer_ = object::create_vertex_buffer(device_, sphere_vertex_data, object::VERTEX_COMPONENT_FLAG_POSITION_NORMAL_TEXCOORD);
+            sphere_vertex_buffer_ = create_vertex_buffer(device_, sphere_vertex_data, VERTEX_COMPONENT_FLAG_POSITION_NORMAL_TEXCOORD);
             barriers.emplace_back(sphere_vertex_buffer_, Diligent::RESOURCE_STATE_UNKNOWN, Diligent::RESOURCE_STATE_VERTEX_BUFFER, Diligent::STATE_TRANSITION_FLAG_UPDATE_STATE);
 
-            sphere_index_buffer_ = object::create_index_buffer(device_, sphere.indices_);
+            sphere_index_buffer_ = create_index_buffer(device_, sphere.indices_);
             barriers.emplace_back(sphere_index_buffer_, Diligent::RESOURCE_STATE_UNKNOWN, Diligent::RESOURCE_STATE_INDEX_BUFFER, Diligent::STATE_TRANSITION_FLAG_UPDATE_STATE);
 
             // MARK: - Plane
 
             create_plane_pso_();
 
-            object::VERTEX_DATA plane_vertex_data;
+            VERTEX_DATA plane_vertex_data;
             plane_vertex_data.positions = object::PLANE_POSITIONS;
             plane_vertex_data.normals = object::PLANE_NORMALS;
             plane_vertex_data.texcoords = object::PLANE_TEXTCOORDS;
 
-            plane_vertex_buffer_ = object::create_vertex_buffer(device_, plane_vertex_data, object::VERTEX_COMPONENT_FLAG_POSITION_NORMAL_TEXCOORD);
+            plane_vertex_buffer_ = create_vertex_buffer(device_, plane_vertex_data, VERTEX_COMPONENT_FLAG_POSITION_NORMAL_TEXCOORD);
             barriers.emplace_back(plane_vertex_buffer_, Diligent::RESOURCE_STATE_UNKNOWN, Diligent::RESOURCE_STATE_VERTEX_BUFFER, Diligent::STATE_TRANSITION_FLAG_UPDATE_STATE);
 
-            plane_index_buffer_ = object::create_index_buffer(device_, object::PLANE_INDICES);
+            plane_index_buffer_ = create_index_buffer(device_, object::PLANE_INDICES);
             barriers.emplace_back(plane_index_buffer_, Diligent::RESOURCE_STATE_UNKNOWN, Diligent::RESOURCE_STATE_INDEX_BUFFER, Diligent::STATE_TRANSITION_FLAG_UPDATE_STATE);
-            
-            /// MARK: Sun
-            //create_sun_pso_();
 
             // MARK: - Texture
 
-            auto wood_texture = object::load_texture(device_, assets_path_ + "/wood.jpeg");
-            auto mj_texture = object::load_texture(device_, assets_path_ + "/mj.jpg");
+            auto wood_texture = load_texture(device_, assets_path_ + "/wood.jpeg");
+            auto mj_texture = load_texture(device_, assets_path_ + "/mj.jpg");
 
             sphere_srb_->GetVariableByName(Diligent::SHADER_TYPE_PIXEL, "g_Texture")->Set(mj_texture->GetDefaultView(Diligent::TEXTURE_VIEW_SHADER_RESOURCE));
             plane_srb_->GetVariableByName(Diligent::SHADER_TYPE_PIXEL, "g_Texture")->Set(wood_texture->GetDefaultView(Diligent::TEXTURE_VIEW_SHADER_RESOURCE));
@@ -125,18 +122,20 @@ namespace engine
                 texture_desc.Type = Diligent::RESOURCE_DIM_TEX_2D;
                 texture_desc.Width = swap_chain_desc.Width;
                 texture_desc.Height = swap_chain_desc.Height;
+                texture_desc.MipLevels = 1;
                 texture_desc.BindFlags = Diligent::BIND_RENDER_TARGET | Diligent::BIND_SHADER_RESOURCE;
-                texture_desc.Format = Diligent::TEX_FORMAT_BGRA8_UNORM_SRGB;
+                texture_desc.Format = swap_chain_desc.ColorBufferFormat;
                 device_->CreateTexture(texture_desc, nullptr, &g_buffer_.color);
                 
                 texture_desc.Name = "GBuffer Depth";
                 texture_desc.BindFlags = Diligent::BIND_DEPTH_STENCIL | Diligent::BIND_SHADER_RESOURCE;
-                texture_desc.Format = Diligent::TEX_FORMAT_D32_FLOAT;
+                texture_desc.Format = swap_chain_desc.DepthBufferFormat;
                 device_->CreateTexture(texture_desc, nullptr, &g_buffer_.depth);
             }
             
             // Create post-processing SRB
             {
+                // We need to release and create a new SRB that references new post process render target SRV
                 post_process_srb_.Release();
                 post_process_pso_->CreateShaderResourceBinding(&post_process_srb_, true);
                 
@@ -172,8 +171,8 @@ namespace engine
             // Get projection matrix adjusted to the current screen orientation
             auto projection = get_adjusted_projection_matrix_(fov_, 0.1f, 100.f);
 
-            // Compute world-view-projection matrix
-            world_view_projection_ = camera_view_ * projection;
+            // Compute camera-view-projection matrix
+            camera_view_projection_ = camera_view_ * projection;
         }
 
         void GraphicsManager::render_sphere_()
@@ -218,27 +217,15 @@ namespace engine
             context_->DrawIndexed(draw_attributes);
         }
 
-        void GraphicsManager::render_sun_()
-        {
-            /// Set the pipeline state in the immediate context
-            context_->SetPipelineState(sun_pso_);
-
-            // Commit shader resources. RESOURCE_STATE_TRANSITION_MODE_TRANSITION mode
-            // makes sure that resources are transitioned to required states.
-            context_->CommitShaderResources(sun_srb_, Diligent::RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
-
-            Diligent::DrawAttribs draw_attributes;
-            draw_attributes.NumVertices = 4;
-            context_->Draw(draw_attributes);
-        }
-
         void GraphicsManager::render_post_process_()
         {
             Diligent::ITextureView* pRTV = swap_chain_->GetCurrentBackBufferRTV();
+            Diligent::ITextureView* pDSV = swap_chain_->GetDepthBufferDSV();
 
-            const float clear_color[4] = {};
+            const float clear_color[] = {0.01f, 0.01f, 0.01f, 1.0f};
             context_->SetRenderTargets(1, &pRTV, nullptr, Diligent::RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
             context_->ClearRenderTarget(pRTV, clear_color, Diligent::RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
+            context_->ClearDepthStencil(pDSV, Diligent::CLEAR_DEPTH_FLAG, 1.0f, 0, Diligent::RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
             
             {
                 context_->SetPipelineState(post_process_pso_);
@@ -262,11 +249,7 @@ namespace engine
             context_->SetRenderTargets(1, &pRTV, pDSV, Diligent::RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
             
             {
-                /// Clear the back buffer
-                const float clear_color[] = {0.01f, 0.01f, 0.01f, 1.0f};
-
-                /// Before rendering anything on the screen we want to clear it:
-                /// Let the engine perform required state transitions
+                const float clear_color[4] = {};
                 context_->ClearRenderTarget(pRTV, clear_color, Diligent::RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
                 context_->ClearDepthStencil(pDSV, Diligent::CLEAR_DEPTH_FLAG, 1.f, 0, Diligent::RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
 
@@ -274,7 +257,7 @@ namespace engine
                     /// Map the buffer and write global constants
                     Diligent::MapHelper<GlobalConstants> constants(context_, global_constants_, Diligent::MAP_WRITE, Diligent::MAP_FLAG_DISCARD);
 
-                    constants->world_view_projection = world_view_projection_.Transpose();
+                    constants->world_view_projection = camera_view_projection_.Transpose();
 
                     const auto& swap_chain_desc = swap_chain_->GetDesc();
                     constants->viewport_size = Diligent::float4(
@@ -370,22 +353,22 @@ namespace engine
             Diligent::RefCntAutoPtr<Diligent::IShaderSourceInputStreamFactory> shader_source_factory;
             engine_factory->CreateDefaultShaderSourceStreamFactory(nullptr, &shader_source_factory);
 
-            object::SHADER_INFO vertex_shader;
+            SHADER_INFO vertex_shader;
             vertex_shader.name = "Sphere vertex shader";
             vertex_shader.path = assets_path_ + "/texture.vsh";
 
-            object::SHADER_INFO pixel_shader;
+            SHADER_INFO pixel_shader;
             pixel_shader.name = "Sphere pixel shader";
             pixel_shader.path = assets_path_ + "/texture.psh";
 
-            object::PSO_INFO pso_info;
+            PSO_INFO pso_info;
             pso_info.name = "Sphere PSO";
             pso_info.rtv_format = swap_chain_->GetDesc().ColorBufferFormat;
             pso_info.dsv_format = swap_chain_->GetDesc().DepthBufferFormat;
             pso_info.shader_source_factory = shader_source_factory;
             pso_info.vertex_shader = vertex_shader;
             pso_info.pixel_shader = pixel_shader;
-            pso_info.components = object::VERTEX_COMPONENT_FLAG_POSITION_NORMAL_TEXCOORD;
+            pso_info.components = VERTEX_COMPONENT_FLAG_POSITION_NORMAL_TEXCOORD;
             pso_info.cull_mode = Diligent::CULL_MODE_BACK;
             pso_info.depth_enable = true;
         
@@ -413,15 +396,10 @@ namespace engine
             pso_info.immutable_samplers = immutable_samplers;
             pso_info.nb_immutable_samplers = _countof(immutable_samplers);
 
-            sphere_pso_ = object::create_pipeline_state(device_, pso_info);
+            sphere_pso_ = create_pipeline_state(device_, pso_info);
 
-            // Since we did not explcitly specify the type for 'Constants' variable, default
-            // type (SHADER_RESOURCE_VARIABLE_TYPE_STATIC) will be used. Static variables never
-            // change and are bound directly through the pipeline state object.
             sphere_pso_->GetStaticVariableByName(Diligent::SHADER_TYPE_VERTEX, "VSConstants")->Set(global_constants_);
 
-            // Since we are using mutable variable, we must create a shader resource binding object
-            // http://diligentgraphics.com/2016/03/23/resource-binding-model-in-diligent-engine-2-0/
             sphere_pso_->CreateShaderResourceBinding(&sphere_srb_, true);
         }
 
@@ -433,22 +411,22 @@ namespace engine
             Diligent::RefCntAutoPtr<Diligent::IShaderSourceInputStreamFactory> shader_source_factory;
             engine_factory->CreateDefaultShaderSourceStreamFactory(nullptr, &shader_source_factory);
 
-            object::SHADER_INFO vertex_shader;
+            SHADER_INFO vertex_shader;
             vertex_shader.name = "Plane vertex shader";
             vertex_shader.path = assets_path_ + "/texture.vsh";
 
-            object::SHADER_INFO pixel_shader;
+            SHADER_INFO pixel_shader;
             pixel_shader.name = "Plane pixel shader";
             pixel_shader.path = assets_path_ + "/texture.psh";
 
-            object::PSO_INFO pso_info;
+            PSO_INFO pso_info;
             pso_info.name = "Plane PSO";
             pso_info.rtv_format = swap_chain_->GetDesc().ColorBufferFormat;
             pso_info.dsv_format = swap_chain_->GetDesc().DepthBufferFormat;
             pso_info.shader_source_factory = shader_source_factory;
             pso_info.vertex_shader = vertex_shader;
             pso_info.pixel_shader = pixel_shader;
-            pso_info.components = object::VERTEX_COMPONENT_FLAG_POSITION_NORMAL_TEXCOORD;
+            pso_info.components = VERTEX_COMPONENT_FLAG_POSITION_NORMAL_TEXCOORD;
             pso_info.cull_mode = Diligent::CULL_MODE_BACK;
             pso_info.depth_enable = true;
         
@@ -461,13 +439,13 @@ namespace engine
 
             Diligent::SamplerDesc sampler_linear_clamp_desc
             {
-                Diligent::FILTER_TYPE_LINEAR, 
+                Diligent::FILTER_TYPE_LINEAR,
                 Diligent::FILTER_TYPE_LINEAR, 
                 Diligent::FILTER_TYPE_LINEAR, 
 
-                Diligent::TEXTURE_ADDRESS_CLAMP, 
-                Diligent::TEXTURE_ADDRESS_CLAMP, 
-                Diligent::TEXTURE_ADDRESS_CLAMP
+                Diligent::TEXTURE_ADDRESS_MIRROR, 
+                Diligent::TEXTURE_ADDRESS_MIRROR, 
+                Diligent::TEXTURE_ADDRESS_MIRROR
             };
             Diligent::ImmutableSamplerDesc immutable_samplers[] = 
             {
@@ -476,51 +454,11 @@ namespace engine
             pso_info.immutable_samplers = immutable_samplers;
             pso_info.nb_immutable_samplers = _countof(immutable_samplers);
 
-            plane_pso_ = object::create_pipeline_state(device_, pso_info);
+            plane_pso_ = create_pipeline_state(device_, pso_info);
 
-            // Since we did not explcitly specify the type for 'Constants' variable, default
-            // type (SHADER_RESOURCE_VARIABLE_TYPE_STATIC) will be used. Static variables never
-            // change and are bound directly through the pipeline state object.
             plane_pso_->GetStaticVariableByName(Diligent::SHADER_TYPE_VERTEX, "VSConstants")->Set(global_constants_);
 
-            // Since we are using mutable variable, we must create a shader resource binding object
-            // http://diligentgraphics.com/2016/03/23/resource-binding-model-in-diligent-engine-2-0/
             plane_pso_->CreateShaderResourceBinding(&plane_srb_, true);
-        }
-
-        void GraphicsManager::create_sun_pso_()
-        {
-            auto *engine_factory = Diligent::GetEngineFactoryMtl();
-
-            // Create a shader source stream factory to load shaders from files.
-            Diligent::RefCntAutoPtr<Diligent::IShaderSourceInputStreamFactory> shader_source_factory;
-            engine_factory->CreateDefaultShaderSourceStreamFactory(nullptr, &shader_source_factory);
-
-            object::SHADER_INFO vertex_shader;
-            vertex_shader.name = "Sun vertex shader";
-            vertex_shader.path = assets_path_ + "/texture.vsh";
-
-            object::SHADER_INFO pixel_shader;
-            pixel_shader.name = "Sun pixel shader";
-            pixel_shader.path = assets_path_ + "/texture.psh";
-
-            object::PSO_INFO pso_info;
-            pso_info.name = "Sun PSO";
-            pso_info.rtv_format = swap_chain_->GetDesc().ColorBufferFormat;
-            pso_info.dsv_format = swap_chain_->GetDesc().DepthBufferFormat;
-            pso_info.shader_source_factory = shader_source_factory;
-            pso_info.vertex_shader = vertex_shader;
-            pso_info.pixel_shader = pixel_shader;
-            pso_info.cull_mode = Diligent::CULL_MODE_NONE;
-            pso_info.fill_mode = Diligent::FILL_MODE_SOLID;
-            pso_info.depth_enable = true;
-            pso_info.topology = Diligent::PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
-
-            sun_pso_ = object::create_pipeline_state(device_, pso_info);
-
-            sun_pso_->GetStaticVariableByName(Diligent::SHADER_TYPE_VERTEX, "VSConstants")->Set(global_constants_);
-
-            sun_pso_->CreateShaderResourceBinding(&sun_srb_, true);
         }
 
         void GraphicsManager::create_post_process_pso_()
@@ -534,15 +472,15 @@ namespace engine
             Diligent::RefCntAutoPtr<Diligent::IShaderSourceInputStreamFactory> shader_source_factory;
             engine_factory->CreateDefaultShaderSourceStreamFactory(nullptr, &shader_source_factory);
 
-            object::SHADER_INFO vertex_shader;
+            SHADER_INFO vertex_shader;
             vertex_shader.name = "Post process vertex shader";
-            vertex_shader.path = assets_path_ + "/post_process.vsh";
+            vertex_shader.path = assets_path_ + "/invert.vsh";
 
-            object::SHADER_INFO pixel_shader;
+            SHADER_INFO pixel_shader;
             pixel_shader.name = "Post process pixel shader";
-            pixel_shader.path = assets_path_ + "/post_process.psh";
+            pixel_shader.path = assets_path_ + "/invert.psh";
 
-            object::PSO_INFO pso_info;
+            PSO_INFO pso_info;
             pso_info.name = "Post process PSO";
             pso_info.rtv_format = swap_chain_->GetDesc().ColorBufferFormat;
             pso_info.shader_source_factory = shader_source_factory;
@@ -576,28 +514,7 @@ namespace engine
             pso_info.immutable_samplers = immutable_samplers;
             pso_info.nb_immutable_samplers = _countof(immutable_samplers);
 
-            post_process_pso_ = object::create_pipeline_state(device_, pso_info);
+            post_process_pso_ = create_pipeline_state(device_, pso_info);
         }
-
-        void GraphicsManager::create_ambient_sky_light_texture_()
-        {
-            Diligent::TextureDesc texture_desc;
-            texture_desc.Name = "Ambient Sky Light";
-            texture_desc.Type = Diligent::RESOURCE_DIM_TEX_2D;
-            texture_desc.Width = ambient_sky_light_dimension_;
-            texture_desc.Height = 1;
-            //texture_desc.Format = AmbientSkyLightTexFmt;
-            texture_desc.MipLevels = 1;
-            texture_desc.Usage = Diligent::USAGE_DEFAULT;
-            texture_desc.BindFlags = Diligent::BIND_RENDER_TARGET | Diligent::BIND_SHADER_RESOURCE;
-
-            Diligent::RefCntAutoPtr<Diligent::ITexture> ambient_sky_light;
-            device_->CreateTexture(texture_desc, nullptr, &ambient_sky_light);
-
-            ambient_sky_light_srv_ = ambient_sky_light->GetDefaultView(Diligent::TEXTURE_VIEW_SHADER_RESOURCE);
-            ambient_sky_light_rtv_ = ambient_sky_light->GetDefaultView(Diligent::TEXTURE_VIEW_RENDER_TARGET);
-            //ambient_sky_light_srv_->SetSampler(m_pLinearClampSampler);
-        }
-
     }
 }

@@ -1,7 +1,5 @@
 #pragma once
 
-#include "object.hpp"
-
 namespace engine
 {
     namespace object
