@@ -1,6 +1,8 @@
-cbuffer Constants
+#include "structures.fxh"
+
+cbuffer VSConstants
 {
-    float4x4 g_WorldViewProj;
+    GlobalConstants g_Constants;
 };
 
 // Vertex shader takes two inputs: vertex position and color.
@@ -27,6 +29,6 @@ void main(
     out VSOutput VsOut
 ) 
 {
-    VsOut.Pos = mul(float4(VSIn.Pos, 1.0), g_WorldViewProj);
+    VsOut.Pos = mul(float4(VSIn.Pos, 1.0), g_Constants.WorldViewProj);
     VsOut.UV = VSIn.UV;
 }

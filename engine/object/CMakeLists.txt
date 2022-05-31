@@ -3,7 +3,6 @@ set(MODULE object)
 engine_library(${MODULE}
     object.cpp
     object.hpp
-    chunk.hpp
     cube.hpp
     plane.hpp
     sphere/uv_sphere.cpp

@@ -23,6 +23,7 @@ namespace engine
         const EventId INPUT = "event::input"_hash;
         const EventId MOUSE_POSITION = "events::mouse_position"_hash;
         const EventId SCROLL_OFFSET = "events::scroll_offset"_hash;
+        const EventId CAMERA_ANGLES = "events::camera_angles"_hash;
 
         /// MARK: - Event parameters
 
@@ -47,6 +48,13 @@ namespace engine
         {
             const EventParameterId X = "event::scroll_offset::x"_hash;
             const EventParameterId Y = "event::scroll_offset::y"_hash;
+        }
+
+        namespace camera_angles
+        {
+            const EventParameterId PITCH = "event::camera_angles::pitch"_hash;
+            const EventParameterId YAW = "event::camera_angles::yaw"_hash;
+            const EventParameterId ROLL = "event::camera_angles::roll"_hash;
         }
     }
 }

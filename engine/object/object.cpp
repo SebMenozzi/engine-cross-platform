@@ -10,6 +10,8 @@ namespace engine
             const std::string& texture_path
         )
         {
+            assert(device);
+            
             Diligent::TextureLoadInfo texture_load_info;
             texture_load_info.IsSRGB = true;
 
@@ -121,6 +123,8 @@ namespace engine
             const PSO_INFO& pso_info
         )
         {
+            assert(device);
+            
             // Pipeline state object encompasses configuration of all GPU stages
             Diligent::GraphicsPipelineStateCreateInfo pipeline_pso_info;
 
@@ -138,11 +142,20 @@ namespace engine
             // Set the desired number of samples
             pipeline_pso_info.GraphicsPipeline.SmplDesc.Count = pso_info.sample_count;
             // Primitive topology defines what kind of primitives will be rendered by this pipeline state
-            pipeline_pso_info.GraphicsPipeline.PrimitiveTopology = Diligent::PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-            // Cull back faces
+            pipeline_pso_info.GraphicsPipeline.PrimitiveTopology = pso_info.topology;
+            // Indicates triangles facing the specified direction are not drawn
             pipeline_pso_info.GraphicsPipeline.RasterizerDesc.CullMode = pso_info.cull_mode;
+            // Determines the fill mode to use when rendering
+            pipeline_pso_info.GraphicsPipeline.RasterizerDesc.FillMode = pso_info.fill_mode;
+            // Determines if a triangle is front- or back-facing. 
+            // - If this parameter is TRUE, a triangle will be considered front-facing, 
+            // if its vertices are counter-clockwise on the render target and considered back-facing if they are clockwise. 
+            // - If this parameter is FALSE, the opposite is true.
+            pipeline_pso_info.GraphicsPipeline.RasterizerDesc.FrontCounterClockwise = pso_info.front_counter_clockwise;
             // Enable depth testing
             pipeline_pso_info.GraphicsPipeline.DepthStencilDesc.DepthEnable = pso_info.depth_enable;
+            // A Boolean value that indicates whether depth values can be written to the depth attachment.
+            pipeline_pso_info.GraphicsPipeline.DepthStencilDesc.DepthWriteEnable = pso_info.depth_write_enable;
 
             Diligent::ShaderCreateInfo shader_create_info;
             // Tell the system that the shader source code is in HLSL.
@@ -156,9 +169,10 @@ namespace engine
             Diligent::RefCntAutoPtr<Diligent::IShader> vertex_shader;
             {
                 shader_create_info.Desc.ShaderType = Diligent::SHADER_TYPE_VERTEX;
-                shader_create_info.EntryPoint = "main";
+                shader_create_info.EntryPoint = pso_info.vertex_shader.entry_point.c_str();
                 shader_create_info.Desc.Name = pso_info.vertex_shader.name.c_str();
                 shader_create_info.FilePath = pso_info.vertex_shader.path.c_str();
+                shader_create_info.UseCombinedTextureSamplers = pso_info.vertex_shader.use_combined_texture_samplers;
 
                 device->CreateShader(shader_create_info, &vertex_shader);
             }
@@ -167,9 +181,10 @@ namespace engine
             Diligent::RefCntAutoPtr<Diligent::IShader> pixel_shader;
             {
                 shader_create_info.Desc.ShaderType = Diligent::SHADER_TYPE_PIXEL;
-                shader_create_info.EntryPoint = "main";
+                shader_create_info.EntryPoint = pso_info.vertex_shader.entry_point.c_str();
                 shader_create_info.Desc.Name = pso_info.pixel_shader.name.c_str();
                 shader_create_info.FilePath = pso_info.pixel_shader.path.c_str();
+                shader_create_info.UseCombinedTextureSamplers = pso_info.pixel_shader.use_combined_texture_samplers;
 
                 device->CreateShader(shader_create_info, &pixel_shader);
             }

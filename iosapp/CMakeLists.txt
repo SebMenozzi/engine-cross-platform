@@ -25,6 +25,8 @@ set(APP_HEADER_FILES
 set(APP_SOURCE_FILES
 	${CMAKE_CURRENT_SOURCE_DIR}/Sources/AppDelegate.swift
 	${CMAKE_CURRENT_SOURCE_DIR}/Sources/ViewController.swift
+	${CMAKE_CURRENT_SOURCE_DIR}/Sources/CustomGestureRecognizer.swift
+	${CMAKE_CURRENT_SOURCE_DIR}/Sources/Float+Extensions.swift
 )
 
 set(RESOURCES

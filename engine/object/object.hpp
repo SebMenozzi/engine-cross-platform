@@ -40,6 +40,8 @@ namespace engine
         {
             std::string name;
             std::string path;
+            std::string entry_point = "main";
+            bool use_combined_texture_samplers = true;
         };
 
         struct PSO_INFO
@@ -57,9 +59,13 @@ namespace engine
             Diligent::LayoutElement* layout_elements = nullptr;
             Diligent::Uint32 nb_layout_elements = 0;
             Diligent::Uint8 sample_count = 1;
+            Diligent::PRIMITIVE_TOPOLOGY topology = Diligent::PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 
             Diligent::CULL_MODE cull_mode = Diligent::CULL_MODE_NONE;
+            Diligent::FILL_MODE fill_mode = Diligent::FILL_MODE_SOLID;
+            Diligent::Bool front_counter_clockwise = false;
             bool depth_enable = false;
+            bool depth_write_enable = false;
 
             const Diligent::ShaderResourceVariableDesc* variables = nullptr;
             Diligent::Uint32 nb_variables = 0;

@@ -28,12 +28,14 @@ add_subdirectory(submodules)
 add_subdirectory(engine)
 
 set(SHADERS
-	${PROJECT_SOURCE_DIR}/assets/shaders/chunk/chunk.psh
-	${PROJECT_SOURCE_DIR}/assets/shaders/chunk/chunk.vsh
-	${PROJECT_SOURCE_DIR}/assets/shaders/cube/cube.psh
-	${PROJECT_SOURCE_DIR}/assets/shaders/cube/cube.vsh
+    ${PROJECT_SOURCE_DIR}/assets/shaders/structures.fxh
+    ${PROJECT_SOURCE_DIR}/assets/shaders/post_process/post_process.psh
+	${PROJECT_SOURCE_DIR}/assets/shaders/post_process/post_process.vsh
+	${PROJECT_SOURCE_DIR}/assets/shaders/texture/texture.psh
+	${PROJECT_SOURCE_DIR}/assets/shaders/texture/texture.vsh
 	${PROJECT_SOURCE_DIR}/assets/shaders/plane/plane.psh
 	${PROJECT_SOURCE_DIR}/assets/shaders/plane/plane.vsh
+    ${PROJECT_SOURCE_DIR}/assets/shaders/sun/sun.fx
 )
 
 set(TEXTURES

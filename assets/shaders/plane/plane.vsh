@@ -1,17 +1,22 @@
+#include "structures.fxh"
 
-cbuffer Constants
+cbuffer VSConstants
 {
-    float4x4 g_WorldViewProj;
+    GlobalConstants g_Constants;
 };
 
+struct VSOutput 
+{ 
+    float4 Pos : SV_POSITION;
+};
 
 void main(
     in uint VertexID : SV_VertexID,
-    out PlanePSInput PSIn
+    out VSOutput VsOut
 )
 {
     float width = 5.0;
-    float y = -2.0;
+    float y = -3.0;
     
     float4 positions[4];
     positions[0] = float4(-width, y, -width, 1.0);
@@ -19,5 +24,5 @@ void main(
     positions[2] = float4(+width, y, -width, 1.0);
     positions[3] = float4(+width, y, +width, 1.0);
 
-    PSIn.Pos = mul(positions[VertexID], g_WorldViewProj);
+    VsOut.Pos = mul(positions[VertexID], g_Constants.WorldViewProj);
 }

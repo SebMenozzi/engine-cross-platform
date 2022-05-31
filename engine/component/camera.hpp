@@ -8,10 +8,9 @@ namespace engine
     {
         struct Camera
         {
-            /// Horizontal angle
             double yaw;
-            /// Vertical angle
             double pitch;
+            double roll;
 
             Diligent::float3 direction;
         };

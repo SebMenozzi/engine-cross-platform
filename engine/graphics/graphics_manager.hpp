@@ -26,7 +26,6 @@
 #include "object.hpp"
 #include "cube.hpp"
 #include "plane.hpp"
-#include "chunk.hpp"
 #include "sphere/uv_sphere.hpp"
 
 using Buffer = std::vector<uint8_t>;
@@ -35,6 +34,38 @@ namespace engine
 {
     namespace graphics
     {
+        struct GlobalConstants
+        {
+            Diligent::float4x4 world_view_projection;
+            Diligent::float4 viewport_size;
+        };
+    
+        struct GBuffer
+        {
+            Diligent::RefCntAutoPtr<Diligent::ITexture> color;
+            Diligent::RefCntAutoPtr<Diligent::ITexture> depth;
+        };
+
+        struct AtmosphereConstants
+        {
+            // How bright the light is, affects the brightness of the atmosphere
+            Diligent::float3 light_intensity;
+            // Radius of the planet
+            float planet_radius;
+            // Radius of the atmosphere
+            float atmosphere_radius;
+            // Amount rayleigh scattering scatters the colors (for earth: causes the blue atmosphere)
+            Diligent::float3 ray_beta;
+            // Amount mie scattering scatters colors
+            Diligent::float3 mie_beta;
+            // Amount of scattering that always occurs, can help make the back side of the atmosphere a bit brighter
+            Diligent::float3 ambient_beta;
+            // Amount of scattering that that gets absorbed by the atmosphere (Due to things like ozone)
+            Diligent::float3 absorption_beta;
+            // Direction mie scatters the light in (like a cone). closer to -1 means more towards a single direction
+            float g;
+        };
+
         class GraphicsManager
         {
             public:
@@ -48,6 +79,7 @@ namespace engine
                 void set_camera_view(Diligent::float4x4 camera_view);
 
             private:
+                void update_g_buffer_();
                 void update_(double dt);
                 void render_();
                 void present_();
@@ -56,15 +88,18 @@ namespace engine
                 bool create_device_and_swap_chain_metal_(const Diligent::NativeWindow* window);
                 void create_swap_chain_metal_(const Diligent::NativeWindow* window);
 
-                void create_chunk_pso_();
-                void create_cube_pso_();
                 void create_sphere_pso_();
                 void create_plane_pso_();
+                void create_sun_pso_();
+                void create_post_process_pso_();
 
-                void render_chunk_();
-                void render_cube_();
                 void render_sphere_();
                 void render_plane_();
+                void render_sun_();
+                void render_post_process_();
+
+                /// Sky
+                void create_ambient_sky_light_texture_();
                 
                 // TODO: dirty fix
                 std::string assets_path_;
@@ -106,13 +141,28 @@ namespace engine
                 Diligent::RefCntAutoPtr<Diligent::IBuffer> plane_vertex_buffer_;
                 Diligent::RefCntAutoPtr<Diligent::IBuffer> plane_index_buffer_;
 
-                Diligent::RefCntAutoPtr<Diligent::IBuffer> vertices_constants_;
-                Diligent::float4x4 world_view_projection_matrix_;
+                Diligent::RefCntAutoPtr<Diligent::IBuffer> global_constants_;
+                Diligent::float4x4 world_view_projection_;
 
                 /// MARK: - Camera
                 Diligent::float4x4 camera_view_;
                 //std::shared_ptr<camera::Camera> camera_;
-                double fov_ = 45.0;
+                double fov_ = 60.0;
+
+                /// Sun
+                Diligent::RefCntAutoPtr<Diligent::IPipelineState> sun_pso_;
+                Diligent::RefCntAutoPtr<Diligent::IShaderResourceBinding> sun_srb_;
+
+                /// Sky
+                static const int ambient_sky_light_dimension_ = 1024;
+                Diligent::RefCntAutoPtr<Diligent::ITextureView> ambient_sky_light_srv_; // 1024 x 1 RGBA16F
+                Diligent::RefCntAutoPtr<Diligent::ITextureView> ambient_sky_light_rtv_;
+
+                /// Post Process
+                Diligent::RefCntAutoPtr<Diligent::IPipelineState> post_process_pso_;
+                Diligent::RefCntAutoPtr<Diligent::IShaderResourceBinding> post_process_srb_;
+            
+                GBuffer g_buffer_;
         };
     }
 }
