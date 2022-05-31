@@ -257,7 +257,7 @@ namespace engine
                     /// Map the buffer and write global constants
                     Diligent::MapHelper<GlobalConstants> constants(context_, global_constants_, Diligent::MAP_WRITE, Diligent::MAP_FLAG_DISCARD);
 
-                    constants->world_view_projection = camera_view_projection_.Transpose();
+                    constants->camera_view_projection = camera_view_projection_.Transpose();
 
                     const auto& swap_chain_desc = swap_chain_->GetDesc();
                     constants->viewport_size = Diligent::float4(

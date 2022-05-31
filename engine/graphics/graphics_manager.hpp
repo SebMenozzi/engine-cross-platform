@@ -36,7 +36,7 @@ namespace engine
     {
         struct GlobalConstants
         {
-            Diligent::float4x4 world_view_projection;
+            Diligent::float4x4 camera_view_projection;
             Diligent::float4 viewport_size;
         };
     
