@@ -5,82 +5,45 @@ namespace engine
 {
     namespace graphics
     {
-        Diligent::RefCntAutoPtr<Diligent::ITexture> load_texture(
-            Diligent::IRenderDevice* device, 
-            const std::string& texture_path
-        )
-        {
-            assert(device);
-            
-            Diligent::TextureLoadInfo texture_load_info;
-            texture_load_info.IsSRGB = true;
+        std::vector<Diligent::Vertex> create_vertices(
+            std::vector<Diligent::float3> positions,
+            std::vector<Diligent::float3> normals,
+            std::vector<Diligent::float2> textcoords
+        ) {
+            const Diligent::Uint32 nb_vertices = Diligent::Uint32(positions.size());
 
-            Diligent::RefCntAutoPtr<Diligent::ITexture> texture;
-            CreateTextureFromFile(texture_path.c_str(), texture_load_info, device, &texture);
+            std::vector<Diligent::Vertex> vertices(nb_vertices);
 
-            return texture;
+            for (Diligent::Uint32 i = 0; i < nb_vertices; ++i)
+            {
+                vertices[i].position = positions[i];
+                vertices[i].normal = normals[i];
+                vertices[i].textcoord = textcoords[i];
+            }
+
+            return vertices;
         }
 
         Diligent::RefCntAutoPtr<Diligent::IBuffer> create_vertex_buffer(
             Diligent::IRenderDevice* device,
-            VERTEX_DATA vertex_data,
-            VERTEX_COMPONENT_FLAGS components,
+            std::vector<Diligent::Vertex> vertices,
             Diligent::BIND_FLAGS bind_flags,
             Diligent::BUFFER_MODE mode
         )
         {
-            assert(components != VERTEX_COMPONENT_FLAG_NONE);
-            
-            const Diligent::Uint32 total_vertex_components =
-                ((components & VERTEX_COMPONENT_FLAG_POSITION) ? 3 : 0) +
-                ((components & VERTEX_COMPONENT_FLAG_NORMAL) ? 3 : 0) +
-                ((components & VERTEX_COMPONENT_FLAG_TEXCOORD) ? 2 : 0);
-
-            const Diligent::Uint32 nb_vertices = Diligent::Uint32(vertex_data.positions.size());
-
-            std::vector<float> data(total_vertex_components * nb_vertices);
-
-            auto it = data.begin();
-
-            for (Diligent::Uint32 v = 0; v < nb_vertices; ++v)
-            {
-                if (components & VERTEX_COMPONENT_FLAG_POSITION)
-                {
-                    const auto& position{vertex_data.positions[v]};
-                    *(it++) = position.x;
-                    *(it++) = position.y;
-                    *(it++) = position.z;
-                }
-                if (components & VERTEX_COMPONENT_FLAG_NORMAL)
-                {
-                    const auto& normal{vertex_data.normals[v]};
-                    *(it++) = normal.x;
-                    *(it++) = normal.y;
-                    *(it++) = normal.z;
-                }
-                if (components & VERTEX_COMPONENT_FLAG_TEXCOORD)
-                {
-                    const auto& texcoord{vertex_data.texcoords[v]};
-                    *(it++) = texcoord.x;
-                    *(it++) = texcoord.y;
-                }
-            }
-
-            assert(it == data.end());
-
-            // Create a vertex buffer that stores cube vertices
+            // Create a vertex buffer that stores vertices
             Diligent::BufferDesc vertex_buffer_desc;
             vertex_buffer_desc.Name = "Vertex buffer";
             vertex_buffer_desc.Usage = Diligent::USAGE_IMMUTABLE;
             vertex_buffer_desc.BindFlags = bind_flags;
-            vertex_buffer_desc.Size = static_cast<Diligent::Uint64>(data.size() * sizeof(float));
+            vertex_buffer_desc.Size = static_cast<Diligent::Uint64>(vertices.size() * sizeof(Diligent::Vertex));
             vertex_buffer_desc.Mode = mode;
 
             if (mode != Diligent::BUFFER_MODE_UNDEFINED)
-                vertex_buffer_desc.ElementByteStride = total_vertex_components * sizeof(float);
+                vertex_buffer_desc.ElementByteStride = sizeof(Diligent::Vertex);
 
             Diligent::BufferData vertex_buffer_data;
-            vertex_buffer_data.pData = data.data();
+            vertex_buffer_data.pData = vertices.data();
             vertex_buffer_data.DataSize = vertex_buffer_desc.Size;
 
             Diligent::RefCntAutoPtr<Diligent::IBuffer> vertex_buffer;
@@ -89,7 +52,7 @@ namespace engine
             return vertex_buffer;
         }
 
-        Diligent::RefCntAutoPtr<Diligent::IBuffer> create_index_buffer(
+        Diligent::RefCntAutoPtr<Diligent::IBuffer> create_indice_buffer(
             Diligent::IRenderDevice* device, 
             const std::vector<Diligent::Uint32> indices,
             Diligent::BIND_FLAGS bind_flags, 
@@ -98,29 +61,31 @@ namespace engine
         {
             const Diligent::Uint32 nb_indices = Diligent::Uint32(indices.size());
 
-            Diligent::BufferDesc index_buffer_desc;
-            index_buffer_desc.Name = "Index buffer";
-            index_buffer_desc.Usage = Diligent::USAGE_IMMUTABLE;
-            index_buffer_desc.BindFlags = bind_flags;
-            index_buffer_desc.Size = nb_indices * sizeof(Diligent::Uint32);
-            index_buffer_desc.Mode = mode;
+            Diligent::BufferDesc indice_buffer_desc;
+            indice_buffer_desc.Name = "Indice buffer";
+            indice_buffer_desc.Usage = Diligent::USAGE_IMMUTABLE;
+            indice_buffer_desc.BindFlags = bind_flags;
+            indice_buffer_desc.Size = nb_indices * sizeof(Diligent::Uint32);
+            indice_buffer_desc.Mode = mode;
 
             if (mode != Diligent::BUFFER_MODE_UNDEFINED)
-                index_buffer_desc.ElementByteStride = sizeof(Diligent::Uint32);
+                indice_buffer_desc.ElementByteStride = sizeof(Diligent::Uint32);
 
-            Diligent::BufferData index_data;
-            index_data.pData = indices.data();
-            index_data.DataSize = nb_indices * sizeof(Diligent::Uint32);
+            Diligent::BufferData indice_data;
+            indice_data.pData = indices.data();
+            indice_data.DataSize = nb_indices * sizeof(Diligent::Uint32);
 
-            Diligent::RefCntAutoPtr<Diligent::IBuffer> index_buffer;
-            device->CreateBuffer(index_buffer_desc, &index_data, &index_buffer);
+            Diligent::RefCntAutoPtr<Diligent::IBuffer> indice_buffer;
+            device->CreateBuffer(indice_buffer_desc, &indice_data, &indice_buffer);
 
-            return index_buffer;
+            return indice_buffer;
         }
 
         Diligent::RefCntAutoPtr<Diligent::IPipelineState> create_pipeline_state(
             Diligent::IRenderDevice* device,
-            const PSO_INFO& pso_info
+            const PSO_INFO& pso_info,
+            const Diligent::Uint32 num_textures,
+            const Diligent::Uint32 num_samplers
         )
         {
             assert(device);
@@ -165,6 +130,20 @@ namespace engine
             shader_create_info.UseCombinedTextureSamplers = true;
             shader_create_info.pShaderSourceStreamFactory = pso_info.shader_source_factory;
 
+            Diligent::ShaderMacroHelper macros;
+            macros.AddShaderMacro("NUM_TEXTURES", num_textures);
+            macros.AddShaderMacro("NUM_SAMPLERS", num_samplers);
+            shader_create_info.Macros = macros;
+            
+            // Vulkan and DirectX require DXC shader compiler.
+            // Metal uses the builtin glslang compiler.
+            #if PLATFORM_MACOS || PLATFORM_IOS || PLATFORM_TVOS
+                const Diligent::SHADER_COMPILER compiler = Diligent::SHADER_COMPILER_DEFAULT;
+            #else
+                const Diligent::SHADER_COMPILER compiler = Diligent::SHADER_COMPILER_DXC;
+            #endif
+            shader_create_info.ShaderCompiler = compiler;
+
             // Create a vertex shader
             Diligent::RefCntAutoPtr<Diligent::IShader> vertex_shader;
             {
@@ -172,7 +151,6 @@ namespace engine
                 shader_create_info.EntryPoint = pso_info.vertex_shader.entry_point.c_str();
                 shader_create_info.Desc.Name = pso_info.vertex_shader.name.c_str();
                 shader_create_info.FilePath = pso_info.vertex_shader.path.c_str();
-                shader_create_info.UseCombinedTextureSamplers = pso_info.vertex_shader.use_combined_texture_samplers;
 
                 device->CreateShader(shader_create_info, &vertex_shader);
             }
@@ -184,7 +162,6 @@ namespace engine
                 shader_create_info.EntryPoint = pso_info.vertex_shader.entry_point.c_str();
                 shader_create_info.Desc.Name = pso_info.pixel_shader.name.c_str();
                 shader_create_info.FilePath = pso_info.pixel_shader.path.c_str();
-                shader_create_info.UseCombinedTextureSamplers = pso_info.pixel_shader.use_combined_texture_samplers;
 
                 device->CreateShader(shader_create_info, &pixel_shader);
             }
@@ -192,22 +169,18 @@ namespace engine
             pipeline_pso_info.pVS = vertex_shader;
             pipeline_pso_info.pPS = pixel_shader;
 
-            Diligent::InputLayoutDescX input_layout;
-            Diligent::Uint32 nb_attributes = 0;
-            if (pso_info.components & VERTEX_COMPONENT_FLAG_POSITION)
-                input_layout.Add(nb_attributes++, 0, 3, Diligent::VT_FLOAT32, false);
-            if (pso_info.components & VERTEX_COMPONENT_FLAG_NORMAL)
-                input_layout.Add(nb_attributes++, 0, 3, Diligent::VT_FLOAT32, false);
-            if (pso_info.components & VERTEX_COMPONENT_FLAG_TEXCOORD)
-                input_layout.Add(nb_attributes++, 0, 2, Diligent::VT_FLOAT32, false);
-
-            for (Diligent::Uint32 i = 0; i < pso_info.nb_layout_elements; ++i)
-                input_layout.Add(pso_info.layout_elements[i]);
-
-            pipeline_pso_info.GraphicsPipeline.InputLayout = input_layout;
+            Diligent::LayoutElement layout_elements[] =
+            {
+                Diligent::LayoutElement{0, 0, 3, Diligent::VT_FLOAT32, false},
+                Diligent::LayoutElement{1, 0, 3, Diligent::VT_FLOAT32, false},
+                Diligent::LayoutElement{2, 0, 2, Diligent::VT_FLOAT32, false}
+            };
+            pipeline_pso_info.GraphicsPipeline.InputLayout.LayoutElements = layout_elements;
+            pipeline_pso_info.GraphicsPipeline.InputLayout.NumElements = _countof(layout_elements);
 
             // Define variable type that will be used by default
-            pipeline_pso_info.PSODesc.ResourceLayout.DefaultVariableType = Diligent::SHADER_RESOURCE_VARIABLE_TYPE_STATIC;
+            pipeline_pso_info.PSODesc.ResourceLayout.DefaultVariableType = Diligent::SHADER_RESOURCE_VARIABLE_TYPE_MUTABLE;
+            pipeline_pso_info.PSODesc.ResourceLayout.DefaultVariableMergeStages = Diligent::SHADER_TYPE_VERTEX | Diligent::SHADER_TYPE_PIXEL;
 
             // Shader variables should typically be mutable, which means they are expected
             // to change on a per-instance basis
@@ -222,6 +195,22 @@ namespace engine
             device->CreateGraphicsPipelineState(pipeline_pso_info, &pso);
 
             return pso;
+        }
+
+        Diligent::RefCntAutoPtr<Diligent::ITexture> load_texture(
+            Diligent::IRenderDevice* device, 
+            const std::string& texture_path
+        )
+        {
+            assert(device);
+            
+            Diligent::TextureLoadInfo texture_load_info;
+            texture_load_info.IsSRGB = true;
+
+            Diligent::RefCntAutoPtr<Diligent::ITexture> texture;
+            Diligent::CreateTextureFromFile(texture_path.c_str(), texture_load_info, device, &texture);
+
+            return texture;
         }
     }
 }

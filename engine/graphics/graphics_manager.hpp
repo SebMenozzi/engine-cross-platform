@@ -24,6 +24,7 @@
 #include "utils_maths.hpp"
 
 #include "graphics_utils.hpp"
+#include "graphics_shader_include.hpp"
 #include "cube.hpp"
 #include "plane.hpp"
 #include "sphere/uv_sphere.hpp"
@@ -34,16 +35,59 @@ namespace engine
 {
     namespace graphics
     {
-        struct GlobalConstants
-        {
-            Diligent::float4x4 camera_view_projection;
-            Diligent::float4 viewport_size;
-        };
-    
         struct GBuffer
         {
-            Diligent::RefCntAutoPtr<Diligent::ITexture> color;
-            Diligent::RefCntAutoPtr<Diligent::ITexture> depth;
+            Diligent::RefCntAutoPtr<Diligent::ITexture> color_texture;
+            //Diligent::RefCntAutoPtr<Diligent::ITexture> normal_texture;
+            Diligent::RefCntAutoPtr<Diligent::ITexture> depth_texture;
+        };
+
+        // Simple implementation of a mesh
+        struct Mesh
+        {
+            std::string name;
+
+            Diligent::RefCntAutoPtr<Diligent::IBottomLevelAS> blas;
+            Diligent::RefCntAutoPtr<Diligent::IBuffer> vertex_buffer;
+            Diligent::RefCntAutoPtr<Diligent::IBuffer> indice_buffer;
+
+            Diligent::Uint32 nb_vertices = 0;
+            Diligent::Uint32 nb_indices = 0;
+            Diligent::Uint32 first_indice = 0; // Offset in the index buffer if IB and VB are shared between multiple meshes
+            Diligent::Uint32 first_vertex = 0; // Offset in the vertex buffer
+        };
+
+        // Objects with the same mesh are grouped for instanced draw call
+        struct InstancedObjects
+        {
+            Diligent::Uint32 mesh_index = 0; // Index in scene.meshes
+            Diligent::Uint32 object_offset = 0; // Offset in scene.object_buffer
+            Diligent::Uint32 nb_objects = 0; // Number of instances for a draw call
+        };
+
+        struct DynamicObject
+        {
+            Diligent::Uint32 object_index = 0; // Index in scene.object_buffer
+        };
+
+        struct Scene
+        {
+            std::vector<InstancedObjects> instanced_objects;
+            std::vector<DynamicObject> dynamic_objects;
+            std::vector<Diligent::Object> objects; // CPU-visible array of Diligent::ObjectAttribs
+
+            // Resources used by shaders
+            std::vector<Mesh> meshes;
+            Diligent::RefCntAutoPtr<Diligent::IBuffer> materials_buffer;
+            Diligent::RefCntAutoPtr<Diligent::IBuffer> objects_buffer; // GPU-visible array of Diligent::Object
+            std::vector<Diligent::RefCntAutoPtr<Diligent::ITexture>> textures;
+            std::vector<Diligent::RefCntAutoPtr<Diligent::ISampler>> samplers;
+            Diligent::RefCntAutoPtr<Diligent::IBuffer> object_constants;
+
+            // Resources for ray tracing
+            Diligent::RefCntAutoPtr<Diligent::ITopLevelAS> tlas;
+            Diligent::RefCntAutoPtr<Diligent::IBuffer> tlas_scratch_buffer;   // Used to update TLAS
+            Diligent::RefCntAutoPtr<Diligent::IBuffer> tlas_instances_buffer; // Used to update TLAS
         };
 
         struct AtmosphereConstants
@@ -96,8 +140,25 @@ namespace engine
                 void render_plane_();
                 void render_post_process_();
 
-                /// Sky
-                void create_ambient_sky_light_texture_();
+                void create_scene_materials_(
+                    Diligent::uint2& cube_material_range, 
+                    Diligent::Uint32& ground_material, 
+                    std::vector<Diligent::Material>& material
+                );
+
+                Mesh create_plane_mesh_();
+                Mesh create_cube_mesh_();
+
+                void create_scene_objects_(
+                    Diligent::uint2& cube_material_range, 
+                    Diligent::Uint32& ground_material
+                );
+
+                void create_scene_acceleration_structs_();
+
+                void update_tlas_();
+
+                void create_scene_();
                 
                 std::string assets_path_;
 
@@ -121,7 +182,7 @@ namespace engine
 
                 Diligent::RefCntAutoPtr<Diligent::ITextureView> cube_texture_srv_;
                 Diligent::RefCntAutoPtr<Diligent::IBuffer> cube_vertex_buffer_;
-                Diligent::RefCntAutoPtr<Diligent::IBuffer> cube_index_buffer_;
+                Diligent::RefCntAutoPtr<Diligent::IBuffer> cube_indice_buffer_;
 
                 /// MARK: - Sphere
                 Diligent::RefCntAutoPtr<Diligent::IPipelineState> sphere_pso_;
@@ -129,14 +190,14 @@ namespace engine
 
                 Diligent::RefCntAutoPtr<Diligent::ITextureView> sphere_texture_srv_;
                 Diligent::RefCntAutoPtr<Diligent::IBuffer> sphere_vertex_buffer_;
-                Diligent::RefCntAutoPtr<Diligent::IBuffer> sphere_index_buffer_;
+                Diligent::RefCntAutoPtr<Diligent::IBuffer> sphere_indice_buffer_;
 
                 /// MARK: - Plane
                 Diligent::RefCntAutoPtr<Diligent::IPipelineState> plane_pso_;
                 Diligent::RefCntAutoPtr<Diligent::IShaderResourceBinding> plane_srb_;
 
                 Diligent::RefCntAutoPtr<Diligent::IBuffer> plane_vertex_buffer_;
-                Diligent::RefCntAutoPtr<Diligent::IBuffer> plane_index_buffer_;
+                Diligent::RefCntAutoPtr<Diligent::IBuffer> plane_indice_buffer_;
 
                 Diligent::RefCntAutoPtr<Diligent::IBuffer> global_constants_;
                 Diligent::float4x4 camera_view_projection_;
@@ -145,9 +206,26 @@ namespace engine
                 Diligent::float4x4 camera_view_;
                 double fov_ = 60.0;
 
-                /// Post Process
+                // Ray-tracing PSO
+                Diligent::RefCntAutoPtr<Diligent::IPipelineState> ray_tracing_pso_;
+                // Scene resources for ray-tracing PSO
+                Diligent::RefCntAutoPtr<Diligent::IShaderResourceBinding> ray_tracing_scene_srb_;
+                // Screen resources for ray-tracing PSO
+                Diligent::RefCntAutoPtr<Diligent::IShaderResourceBinding> ray_tracing_screen_srb_;
+
+                // G-buffer rendering PSO and SRB
+                Diligent::RefCntAutoPtr<Diligent::IPipelineState> rasterization_pso_;
+                Diligent::RefCntAutoPtr<Diligent::IShaderResourceBinding> rasterization_srb_;
+
+                /// Post-processing PSO and SRB
                 Diligent::RefCntAutoPtr<Diligent::IPipelineState> post_process_pso_;
                 Diligent::RefCntAutoPtr<Diligent::IShaderResourceBinding> post_process_srb_;
+
+                /// Raytracing
+                Diligent::RefCntAutoPtr<Diligent::ITexture> ray_traced_texture_;
+
+                /// Scene
+                Scene scene_;
 
         };
     }

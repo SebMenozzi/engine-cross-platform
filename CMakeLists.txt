@@ -2,6 +2,10 @@ cmake_minimum_required(VERSION 3.20)
 
 project(engine)
 
+# Just to delete the warning CMAKE_TOOLCHAIN_FILE unused
+# https://stackoverflow.com/questions/14757506/why-am-i-warned-that-the-cmake-toolchain-file-variable-is-not-used-by-the-proj
+MESSAGE(STATUS "Using toolchain file: ${CMAKE_TOOLCHAIN_FILE}")
+
 # Generate xcode schema files
 set(CMAKE_XCODE_GENERATE_SCHEME TRUE)
 # Make malloc write 0xAA to newly allocated memory and 0x55 to deallocated memory
