@@ -1,9 +1,6 @@
 #include "structures.fxh"
 
-cbuffer VSConstants
-{
-    GlobalConstants g_Constants;
-};
+ConstantBuffer<GlobalConstants> g_Constants;
 
 // Vertex shader takes two inputs: vertex position and color.
 // By convention, Diligent Engine expects vertex shader inputs to be 
@@ -29,6 +26,6 @@ void main(
     out VSOutput VsOut
 ) 
 {
-    VsOut.Pos = mul(float4(VSIn.Pos, 1.0), g_Constants.CameraViewProjection);
+    VsOut.Pos = mul(float4(VSIn.Pos, 1.0), g_Constants.camera_view_projection);
     VsOut.UV = VSIn.UV;
 }

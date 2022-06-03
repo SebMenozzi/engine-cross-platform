@@ -17,7 +17,7 @@ namespace engine
                 sectorCount_((sectorCount < MIN_SECTOR_COUNT) ? MIN_SECTOR_COUNT : sectorCount),
                 stackCount_((stackCount < MIN_STACK_COUNT) ? MIN_STACK_COUNT : stackCount) 
             {
-                // Generate vertices, normals and texture coords
+                // Generate positions, normals and texture coords
                 float lengthInv = 1.0f / radius_;
                 float sectorStep = 2 * M_PI / sectorCount_;
                 float stackStep = M_PI / stackCount_;
@@ -33,11 +33,11 @@ namespace engine
                     {
                         float sectorAngle = j * sectorStep; // starting from 0 to 2pi
 
-                        /// Vertices
+                        /// Positions
                         float x = xy * cosf(sectorAngle); // r * cos(u) * cos(v)
                         float y = xy * sinf(sectorAngle); // r * cos(u) * sin(v)
 
-                        vertices_.push_back(Diligent::float3(x, y, z));
+                        positions_.push_back(Diligent::float3(x, y, z));
 
                         /// Normals
                         float nx = x * lengthInv;

@@ -22,7 +22,7 @@ namespace engine
                         int stackCount
                     );
 
-                    std::vector<Diligent::float3> vertices_;
+                    std::vector<Diligent::float3> positions_;
                     std::vector<Diligent::float3> normals_;
                     std::vector<Diligent::float2> textcoords_;
                     std::vector<Diligent::Uint32> indices_;
