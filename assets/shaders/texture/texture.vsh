@@ -1,6 +1,6 @@
 #include "structures.fxh"
 
-cbuffer VSConstants
+cbuffer Constants
 {
     GlobalConstants g_Constants;
 };
@@ -29,6 +29,6 @@ void main(
     out VSOutput VsOut
 ) 
 {
-    VsOut.Pos = mul(float4(VSIn.Pos, 1.0), g_Constants.CameraViewProjection);
+    VsOut.Pos = mul(float4(VSIn.Pos, 1.0), g_Constants.camera_view_projection);
     VsOut.UV = VSIn.UV;
 }

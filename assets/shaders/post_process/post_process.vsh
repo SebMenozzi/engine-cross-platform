@@ -1,7 +1,7 @@
 struct PSInput 
 { 
     float4 Pos : SV_POSITION; 
-    float2 UV  : TEX_COORD; 
+    float2 UV : TEX_COORD; 
 };
 
 void main(

@@ -75,8 +75,12 @@ namespace engine
         camera_control_system->update(dt);
         physics_system->update(dt);
 
-        Diligent::float4x4 view = camera_control_system->look_at();
-        graphics_manager->set_camera_view(view);
+        Diligent::float4x4 camera_view = camera_control_system->look_at();
+        Diligent::float3 camera_position = camera_control_system->get_position();
+
+        graphics_manager->set_camera_view(camera_view);
+        graphics_manager->set_camera_position(camera_position);
+        
         graphics_manager->update(dt);
     }
 

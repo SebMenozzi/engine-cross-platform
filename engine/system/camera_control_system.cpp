@@ -82,6 +82,13 @@ namespace engine
             return view_matrix * Diligent::float4x4::RotationArbitrary(up_axis_, roll_radian);
         }
 
+        Diligent::float3 CameraControlSystem::get_position()
+        {
+            auto& transform = coordinator->get_component<component::Transform>(selected_);
+
+            return transform.position;
+        }
+
         // MARK: - Private methods
 
         void CameraControlSystem::move_from_keyboard_input_(float dt)

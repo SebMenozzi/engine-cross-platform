@@ -207,7 +207,7 @@ namespace engine
             pipeline_pso_info.GraphicsPipeline.InputLayout = input_layout;
 
             // Define variable type that will be used by default
-            pipeline_pso_info.PSODesc.ResourceLayout.DefaultVariableType = Diligent::SHADER_RESOURCE_VARIABLE_TYPE_STATIC;
+            pipeline_pso_info.PSODesc.ResourceLayout.DefaultVariableType = Diligent::SHADER_RESOURCE_VARIABLE_TYPE_MUTABLE;
 
             // Shader variables should typically be mutable, which means they are expected
             // to change on a per-instance basis

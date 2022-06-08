@@ -1,0 +1,98 @@
+#include "structures.fxh"
+
+Texture2D g_GBuffer_Color;
+SamplerState g_GBuffer_Color_sampler;
+Texture2D g_GBuffer_Depth;
+
+cbuffer Constants
+{
+    GlobalConstants g_Constants;
+};
+
+struct PSInput 
+{ 
+    float4 Pos : SV_POSITION; 
+    float2 UV : TEX_COORD; 
+};
+
+// Simple procedural sky and sun
+float3 get_sky_color(float3 ray_direction, float3 sun_direction)
+{
+	ray_direction.y += 0.075;
+	ray_direction = normalize(ray_direction);
+
+	float cos_theta = dot(ray_direction, sun_direction);
+    float scattering_scale = pow(saturate(0.5 * (1.0 - cos_theta)), 0.2);
+
+	float3 sky_color = pow(saturate(cos_theta - 0.02), 50.0) * saturate(sun_direction.y * 5.0);
+
+	float3 sky_dome = float3(0.07, 0.11, 0.23) *
+		lerp(max(scattering_scale, 0.1), 1.0, saturate(ray_direction.y)) / max(ray_direction.y, 0.01);
+
+	sky_dome *= 13.0 / max(length(sky_dome), 13.0);
+	float3 horizon = pow(sky_dome, float3(1.0, 1.0, 1.0) - sky_dome);
+	sky_color += lerp(horizon, sky_dome / (sky_dome + 0.5), saturate(ray_direction.y * 2.0));
+	
+	sky_color *= 1.0 + pow(1.0 - scattering_scale, 10.0) * 10.0;
+	sky_color *= 1.0 - abs(1.0 - ray_direction.y) * 0.5;
+	
+	return sky_color;
+}
+
+float3 screen_position_to_world_position(
+    float2 screen_space_uv,
+    float depth, 
+    float4x4 camera_view_projection_inverse
+)
+{
+	float4 position_clip_space;
+    position_clip_space.xy = screen_space_uv * float2(2.0, -2.0) + float2(-1.0, 1.0);
+    position_clip_space.z = depth;
+    position_clip_space.w = 1.0;
+
+    float4 world_position = mul(position_clip_space, camera_view_projection_inverse);
+
+    return world_position.xyz / world_position.w;
+}
+
+float4 main(
+    in PSInput PSIn
+) : SV_Target
+{
+    float2 dimension;
+    g_GBuffer_Color.GetDimensions(dimension.x, dimension.y);
+
+    float2 screen_uv = float2(PSIn.UV.x, 1.0 - PSIn.UV.y);
+    int3 texel_position = int3(screen_uv * dimension, 0);
+
+    float depth = g_GBuffer_Depth.Load(texel_position).x;
+
+    // To calculate the UV coordinates for sampling the depth buffer, divide the pixel location by the render target resolution
+    float2 screen_space_uv = PSIn.Pos.xy / dimension;
+
+    float3 world_position = screen_position_to_world_position(
+        screen_space_uv, 
+        depth,
+        g_Constants.camera_view_projection_inverse
+    );
+
+    float3 view_ray_direction = normalize(
+        world_position.xyz - g_Constants.camera_position.xyz
+    );
+
+    float3 final_color;
+
+    if (depth < 1.0)
+    {
+        final_color = g_GBuffer_Color.Load(texel_position).rgb;
+    }
+    else
+    {
+        final_color = get_sky_color(
+            view_ray_direction,
+            g_Constants.sun_direction
+        );
+    }
+
+    return float4(final_color, 1.0);
+}

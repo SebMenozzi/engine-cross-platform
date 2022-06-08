@@ -24,6 +24,7 @@
 #include "utils_maths.hpp"
 
 #include "graphics_utils.hpp"
+#include "graphics_shader_include.hpp"
 #include "cube.hpp"
 #include "plane.hpp"
 #include "sphere/uv_sphere.hpp"
@@ -34,16 +35,10 @@ namespace engine
 {
     namespace graphics
     {
-        struct GlobalConstants
-        {
-            Diligent::float4x4 camera_view_projection;
-            Diligent::float4 viewport_size;
-        };
-    
         struct GBuffer
         {
-            Diligent::RefCntAutoPtr<Diligent::ITexture> color;
-            Diligent::RefCntAutoPtr<Diligent::ITexture> depth;
+            Diligent::RefCntAutoPtr<Diligent::ITexture> color_texture;
+            Diligent::RefCntAutoPtr<Diligent::ITexture> depth_texture;
         };
 
         struct AtmosphereConstants
@@ -77,6 +72,7 @@ namespace engine
                 void resize(uint32_t width, uint32_t height);
                 void set_fov(double fov);
                 void set_camera_view(Diligent::float4x4 camera_view);
+                void set_camera_position(Diligent::float3 camera_position);
 
             private:
                 void update_g_buffer_();
@@ -143,11 +139,15 @@ namespace engine
 
                 /// MARK: - Camera
                 Diligent::float4x4 camera_view_;
+                Diligent::float3 camera_position_;
                 double fov_ = 60.0;
 
-                /// Post Process
+                /// MARK: - Post Process
                 Diligent::RefCntAutoPtr<Diligent::IPipelineState> post_process_pso_;
                 Diligent::RefCntAutoPtr<Diligent::IShaderResourceBinding> post_process_srb_;
+
+                /// MARK: - Sun
+                Diligent::float3 sun_direction_ = Diligent::normalize(-Diligent::float3{0.0, 1.0, 1.0});
 
         };
     }

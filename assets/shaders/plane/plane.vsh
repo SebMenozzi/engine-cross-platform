@@ -24,5 +24,5 @@ void main(
     positions[2] = float4(+width, y, -width, 1.0);
     positions[3] = float4(+width, y, +width, 1.0);
 
-    VsOut.Pos = mul(positions[VertexID], g_Constants.CameraViewProjection);
+    VsOut.Pos = mul(positions[VertexID], g_Constants.camera_view_projection);
 }

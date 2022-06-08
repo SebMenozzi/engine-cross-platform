@@ -1,4 +1,4 @@
-.PHONY: xcode xcode-ios debug clean
+.PHONY: xcode xcode-ios debug release clean
 
 xcode:
 	cmake -S . -B build -G Xcode
@@ -9,7 +9,12 @@ xcode-ios:
 	open build/engine.xcodeproj
 
 debug:
-	cmake -S . -B build -D CMAKE_BUILD_TYPE=DEBUG
+	cmake -S . -B build
+	cd build; make -j8
+	./build/desktop/desktop
+
+release:
+	cmake -S . -B build -D CMAKE_BUILD_TYPE=Release
 	cd build; make -j8
 	./build/desktop/desktop
 

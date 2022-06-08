@@ -24,6 +24,7 @@ namespace engine
                 void init();
                 void update(float dt);
                 Diligent::float4x4 look_at();
+                Diligent::float3 get_position();
             private:
                 void update_direction_();
                 void orientate_with_mouse_();
